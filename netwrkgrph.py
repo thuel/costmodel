@@ -55,20 +55,40 @@ class Graph(object):
     def __str__(self):
         return "Graph with vertices %s and edges %s." % (self.vertices, self.edges)
 
-    def add_edge(self,edge):
-        self.edges[edge.id()] = edge
-        self.add_vertice(edge.start)
-        self.add_vertice(edge.end)
+    def add_edge(self,x1,y1,x2,y2):
+        start = self.edges.get(str(0) + str(x1) + str(y1), Vertice(x1,y1))
+        if not self.check_vertice(start):
+            self.add_vertice(start)
+        end = self.edges.get(str(0) + str(x2) + str(y2), Vertice(x2,y2))
+        if not self.check_vertice(end):
+            self.add_vertice(end)
+        new_edge = Edge(start, end)
+        if self.check_edge(new_edge):
+            print "%s already exists. Doing noting" % new_edge
+        else:
+            self.edges[new_edge.id()] = new_edge
 
     def add_vertice(self, vertice):
         self.vertices[vertice.id()] = vertice
 
-vert1 = Vertice(2,5)
-print vert1
-vert1.id()
-edge1 = Edge(vert1)
-print edge1.length()
-print edge1
+    def check_vertice(self,vertice):
+        if vertice.id() in self.vertices:
+            print "Vertice exists."
+            return True
+        else:
+            print "Vertice doesn't exist."
+            return False
+
+    def check_edge(self, edge):
+        if edge.id() in self.edges:
+            return True
+        else:
+            return False
+
 graph=Graph()
-graph.add_edge(edge1)
+graph.add_edge(2,5,1,1)
+graph.add_edge(3,3,1,1)
+graph.add_edge(3,6,7,5)
+graph.add_edge(0,0,1,1)
+graph.add_edge(1,1,3,6)
 print graph
