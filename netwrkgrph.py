@@ -4,7 +4,7 @@
 """
 
 #import essential modules, libraries and methods/functions
-from math import sqrt
+from math import sqrt, asin, degrees
 
 """Define classes of this library
 """
@@ -30,6 +30,7 @@ class Edge(object):
         self.start = start
         self.end = end
         self.sort_coordinates()
+        print "angle: %f, start: %s, end: %s" % (self.angle(), self.start, self.end)
 
     def __str__(self):
         return "Edge with vertices at %d / %d and %d / %d." % (self.start.x, self.start.y, self.end.x, self.end.y)
@@ -44,6 +45,8 @@ class Edge(object):
         if self.start.x > self.end.x:
             self.start, self.end = (self.end, self.start)
 
+    def angle(self):
+        return degrees(asin((self.end.y - self.start.y)/self.length()))
 
 class Graph(object):
     """Graph to be populated by Vertice and Edge objects.
@@ -85,10 +88,12 @@ class Graph(object):
         else:
             return False
 
-graph=Graph()
-graph.add_edge(2,5,1,1)
-graph.add_edge(3,3,1,1)
-graph.add_edge(3,6,7,5)
-graph.add_edge(0,0,1,1)
-graph.add_edge(1,1,3,6)
-print graph
+if __name__ == "__main__":
+    graph=Graph()
+    graph.add_edge(2,5,1,1)
+    graph.add_edge(3,3,1,1)
+    graph.add_edge(3,6,7,5)
+    graph.add_edge(0,0,1,1)
+    graph.add_edge(1,1,6,1)
+    graph.add_edge(3,3,4,2)
+    print graph
