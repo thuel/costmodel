@@ -11,11 +11,12 @@ from math import sqrt, asin, degrees
 
 #network graph point/vertice class
 class Vertice(object):
-    """Vertice to be used in a network graph. Attributes: x and y coordinates.
+    """Vertice to be used in a network graph. Attributes: x and y coordinatesm, neigbours.
     """
-    def __init__(self, x=0, y=0):
+    def __init__(self, x=0, y=0, neigbours={}):
         self.x = x
         self.y = y
+        self.neigbours = neigbours
 
     def __str__(self):
         return "Vertice with coordinates: %d / %d" % (self.x, self.y)
@@ -88,12 +89,26 @@ class Graph(object):
         else:
             return False
 
+    def get_connecting_edges(self, vertice):
+        connecting_edges = []
+        for edge in self.edges:
+            if self.edges[edge].start is vertice or self.edges[edge].end is vertice:
+                connecting_edges.append(self.edges[edge])
+        return connecting_edges
+
 if __name__ == "__main__":
     graph=Graph()
     graph.add_edge(2,5,1,1)
     graph.add_edge(3,3,1,1)
     graph.add_edge(3,6,7,5)
     graph.add_edge(0,0,1,1)
+    graph.add_edge(0,2,1,1)
     graph.add_edge(1,1,6,1)
     graph.add_edge(3,3,4,2)
     print graph
+    for vertice in graph.vertices:
+        print graph.get_connecting_edges(graph.vertices[vertice])
+
+    for edge in graph.edges:
+        e = graph.edges[edge]
+        print e, [e.start, e.end]
