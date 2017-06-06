@@ -60,10 +60,10 @@ class Graph(object):
         return "Graph with vertices %s and edges %s." % (self.vertices, self.edges)
 
     def add_edge(self,x1,y1,x2,y2):
-        start = self.edges.get(str(0) + str(x1) + str(y1), Vertice(x1,y1))
+        start = self.vertices.get(str(0) + str(x1) + str(y1), Vertice(x1,y1))
         if not self.check_vertice(start):
             self.add_vertice(start)
-        end = self.edges.get(str(0) + str(x2) + str(y2), Vertice(x2,y2))
+        end = self.vertices.get(str(0) + str(x2) + str(y2), Vertice(x2,y2))
         if not self.check_vertice(end):
             self.add_vertice(end)
         new_edge = Edge(start, end)
