@@ -13,13 +13,13 @@ from math import sqrt, asin, degrees
 class Vertice(object):
     """Vertice to be used in a network graph. Attributes: x and y coordinatesm, neigbours.
     """
-    def __init__(self, x=0, y=0, neigbours={}):
+    def __init__(self, x=0.0, y=0.0, neighbours={}):
         self.x = x
         self.y = y
-        self.neigbours = neigbours
+        self.neighbours = neighbours
 
     def __str__(self):
-        return "Vertice with coordinates: %d / %d" % (self.x, self.y)
+        return "Vertice with coordinates: %f / %f" % (self.x, self.y)
 
     def id(self):
         return str(0) + str(self.x) + str(self.y)
@@ -27,17 +27,17 @@ class Vertice(object):
 class Edge(object):
     """Edge to be used in a network graph. Attributes: start, end as Vertice objects.
     """
-    def __init__(self, start=Vertice(0,0), end=Vertice(1,1)):
+    def __init__(self, start=Vertice(0.0,0.0), end=Vertice(1.0,1.0)):
         self.start = start
         self.end = end
         self.sort_coordinates()
         print "angle: %f, start: %s, end: %s" % (self.angle(), self.start, self.end)
 
     def __str__(self):
-        return "Edge with vertices at %d / %d and %d / %d." % (self.start.x, self.start.y, self.end.x, self.end.y)
+        return "Edge with vertices at %f / %f and %f / %f." % (self.start.x, self.start.y, self.end.x, self.end.y)
 
     def length(self):
-	return sqrt((self.start.x - self.end.x) ** 2 + (self.start.y - self.end.y) ** 2)
+        return sqrt((self.start.x - self.end.x) ** 2 + (self.start.y - self.end.y) ** 2)
 
     def id(self):
         return str(9) + str(self.start.x) + str(self.start.y) + str(self.end.x) + str(self.end.y)
@@ -59,7 +59,7 @@ class Graph(object):
     def __str__(self):
         return "Graph with vertices %s and edges %s." % (self.vertices, self.edges)
 
-    def add_edge(self,x1,y1,x2,y2):
+    def add_edge(self, x1, y1, x2, y2):
         start = self.vertices.get(str(0) + str(x1) + str(y1), Vertice(x1,y1))
         if not self.check_vertice(start):
             self.add_vertice(start)
@@ -75,7 +75,7 @@ class Graph(object):
     def add_vertice(self, vertice):
         self.vertices[vertice.id()] = vertice
 
-    def check_vertice(self,vertice):
+    def check_vertice(self, vertice):
         if vertice.id() in self.vertices:
             print "Vertice exists."
             return True
@@ -96,6 +96,20 @@ class Graph(object):
                 connecting_edges.append(self.edges[edge])
         return connecting_edges
 
+    def get_neighbours(self, vertice):
+        n = {}
+        edges = self.get_connecting_edges(vertice)
+        for edge in edges:
+            if edge.start is vertice:
+                n[edge.end.id()] = edge.end
+            elif edge.end is vertice:
+                n[edge.start.id()] = edge.start
+        return n
+
+    def calc_neighbours(self):
+        for vertice in self.vertices:
+            self.vertices[vertice].neighbours = self.get_neighbours(self.vertices[vertice])
+
 if __name__ == "__main__":
     graph=Graph()
     graph.add_edge(2,5,1,1)
@@ -105,10 +119,8 @@ if __name__ == "__main__":
     graph.add_edge(0,2,1,1)
     graph.add_edge(1,1,6,1)
     graph.add_edge(3,3,4,2)
+    graph.calc_neighbours()
     print graph
     for vertice in graph.vertices:
-        print graph.get_connecting_edges(graph.vertices[vertice])
-
-    for edge in graph.edges:
-        e = graph.edges[edge]
-        print e, [e.start, e.end]
+        #print graph.get_connecting_edges(graph.vertices[vertice])
+        print "neighbours: ", graph.vertices[vertice].neighbours
