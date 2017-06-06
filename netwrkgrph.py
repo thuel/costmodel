@@ -110,6 +110,12 @@ class Graph(object):
         for vertice in self.vertices:
             self.vertices[vertice].neighbours = self.get_neighbours(self.vertices[vertice])
 
+    def shortest_edge(self, vertice, buffer=30, filter=None):
+        """Search distance to nearest existing edge. Optionally exclude edges by type using the filter parameter.
+           Use buffer as search radius. 
+        """
+        pass
+
 if __name__ == "__main__":
     graph=Graph()
     graph.add_edge(2,5,1,1)
