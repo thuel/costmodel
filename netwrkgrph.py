@@ -11,12 +11,14 @@ from math import sqrt, asin, degrees
 
 #network graph point/vertice class
 class Vertice(object):
-    """Vertice to be used in a network graph. Attributes: x and y coordinatesm, neigbours.
+    """Vertice to be used in a network graph. Attributes: x and y coordinates, neigbour vertices,
+        type.
     """
-    def __init__(self, x=0.0, y=0.0, neighbours={}):
+    def __init__(self, x=0.0, y=0.0, neighbours={}, vtype="Helper"):
         self.x = x
         self.y = y
         self.neighbours = neighbours
+        self.vtype = vtype
 
     def __str__(self):
         return "Vertice with coordinates: %f / %f" % (self.x, self.y)
@@ -77,10 +79,8 @@ class Graph(object):
 
     def check_vertice(self, vertice):
         if vertice.id() in self.vertices:
-            print "Vertice exists."
             return True
         else:
-            print "Vertice doesn't exist."
             return False
 
     def check_edge(self, edge):
@@ -89,37 +89,48 @@ class Graph(object):
         else:
             return False
 
-    def get_connecting_edges(self, vertice):
-        connecting_edges = []
-        for edge in self.edges:
-            if self.edges[edge].start is vertice or self.edges[edge].end is vertice:
-                connecting_edges.append(self.edges[edge])
-        return connecting_edges
+def get_connecting_edges(vertice, edges):
+    """The edges - given as a dictionary of edge objects - connecting a given vertice
+       object to a graph are returned as list.
+    """
+    connecting_edges = []
+    for edge in edges:
+        if edges[edge].start is vertice or edges[edge].end is vertice:
+            connecting_edges.append(edges[edge])
+    return connecting_edges
 
-    def get_neighbours(self, vertice):
-        n = {}
-        edges = self.get_connecting_edges(vertice)
-        for edge in edges:
-            if edge.start is vertice:
-                n[edge.end.id()] = edge.end
-            elif edge.end is vertice:
-                n[edge.start.id()] = edge.start
-        return n
+def get_neighbours(vertice, edges):
+    """Get a dictionary of vertice objects of the neighbouring vertices for a given
+       vertice object and the edges of the graph. TODO: change order of calling
+       connecting edges and the neighbour calculation.
+    """
+    n = {}
+    edges = get_connecting_edges(vertice, edges)
+    for edge in edges:
+        if edge.start is vertice:
+            n[edge.end.id()] = edge.end
+        elif edge.end is vertice:
+            n[edge.start.id()] = edge.start
+    return n
 
-    def calc_neighbours(self):
-        for vertice in self.vertices:
-            self.vertices[vertice].neighbours = self.get_neighbours(self.vertices[vertice])
+def calc_neighbours(vertices, edges):
+    """For a dictionary of vertice objctes and a directory of edge objects, calculate
+       the neighbouring vertices of every vertice object.
+    """
+    for vertice in vertices:
+        vertices[vertice].neighbours = get_neighbours(vertices[vertice], edges)
 
 if __name__ == "__main__":
     graph=Graph()
     graph.add_edge(2,5,1,1)
+    graph.add_edge(2,5,7,5)
     graph.add_edge(3,3,1,1)
     graph.add_edge(3,6,7,5)
     graph.add_edge(0,0,1,1)
     graph.add_edge(0,2,1,1)
     graph.add_edge(1,1,6,1)
     graph.add_edge(3,3,4,2)
-    graph.calc_neighbours()
+    calc_neighbours(graph.vertices, graph.edges)
     print graph
     for vertice in graph.vertices:
         #print graph.get_connecting_edges(graph.vertices[vertice])
