@@ -9,16 +9,14 @@ from math import sqrt, asin, degrees
 """Define classes of this library
 """
 
-#network graph point/vertice class
 class Vertice(object):
     """Vertice to be used in a network graph. Attributes: x and y coordinates, neigbour vertices,
         type.
     """
-    def __init__(self, x=0.0, y=0.0, neighbours={}, vtype="Helper"):
+    def __init__(self, x=0.0, y=0.0, neighbours={}):
         self.x = x
         self.y = y
         self.neighbours = neighbours
-        self.vtype = vtype
 
     def __str__(self):
         return "Vertice with coordinates: %f / %f" % (self.x, self.y)
@@ -29,17 +27,18 @@ class Vertice(object):
 class Edge(object):
     """Edge to be used in a network graph. Attributes: start, end as Vertice objects.
     """
-    def __init__(self, start=Vertice(0.0,0.0), end=Vertice(1.0,1.0)):
+    def __init__(self, start=Vertice(0.0,0.0), end=Vertice(1.0,1.0), intermediates=list()):
         self.start = start
         self.end = end
         self.sort_coordinates()
+        self.intermediates = intermediates
         print "angle: %f, start: %s, end: %s" % (self.angle(), self.start, self.end)
 
     def __str__(self):
         return "Edge with vertices at %f / %f and %f / %f." % (self.start.x, self.start.y, self.end.x, self.end.y)
 
     def length(self):
-        return sqrt((self.start.x - self.end.x) ** 2 + (self.start.y - self.end.y) ** 2)
+        return distance(self.start, self.end, self.intermediates)
 
     def id(self):
         return str(9) + str(self.start.x) + str(self.start.y) + str(self.end.x) + str(self.end.y)
@@ -61,14 +60,14 @@ class Graph(object):
     def __str__(self):
         return "Graph with vertices %s and edges %s." % (self.vertices, self.edges)
 
-    def add_edge(self, x1, y1, x2, y2):
+    def add_edge(self, x1, y1, x2, y2, intermediates=list()):
         start = self.vertices.get(str(0) + str(x1) + str(y1), Vertice(x1,y1))
         if not self.check_vertice(start):
             self.add_vertice(start)
         end = self.vertices.get(str(0) + str(x2) + str(y2), Vertice(x2,y2))
         if not self.check_vertice(end):
             self.add_vertice(end)
-        new_edge = Edge(start, end)
+        new_edge = Edge(start, end, intermediates)
         if self.check_edge(new_edge):
             print "%s already exists. Doing noting" % new_edge
         else:
@@ -120,18 +119,30 @@ def calc_neighbours(vertices, edges):
     for vertice in vertices:
         vertices[vertice].neighbours = get_neighbours(vertices[vertice], edges)
 
+def distance(p1, p2, i=list(), dist=0):
+    if len(i) == 0:
+        dist += sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
+        return dist
+    else:
+        x2, y2 = i[0]
+        dist += sqrt((p1.x - x2) ** 2 + (p1.y - y2) ** 2)
+        return distance(Vertice(x2,y2), p2, i[1:], dist)
+        
 if __name__ == "__main__":
     graph=Graph()
     graph.add_edge(2,5,1,1)
     graph.add_edge(2,5,7,5)
     graph.add_edge(3,3,1,1)
     graph.add_edge(3,6,7,5)
-    graph.add_edge(0,0,1,1)
+    graph.add_edge(0,0,1,1,[(0.25,0.3),(0.5,0.65),(0.75,0.8)])
     graph.add_edge(0,2,1,1)
     graph.add_edge(1,1,6,1)
     graph.add_edge(3,3,4,2)
     calc_neighbours(graph.vertices, graph.edges)
-    print graph
     for vertice in graph.vertices:
         #print graph.get_connecting_edges(graph.vertices[vertice])
         print "neighbours: ", graph.vertices[vertice].neighbours
+
+    for edge in graph.edges:
+        e = graph.edges[edge]
+        print e, e.length() 
