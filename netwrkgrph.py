@@ -5,7 +5,6 @@
 
 #import essential modules, libraries and methods/functions
 from math import sqrt, asin, degrees
-from pltgrph import *
 
 """Define classes of this library
 """
@@ -33,8 +32,7 @@ class Edge(object):
         self.end = end
         self.sort_coordinates()
         self.intermediates = intermediates
-        print "angle: %f, start: %s, end: %s" % (self.angle(), self.start, self.end)
-
+        
     def __str__(self):
         return "Edge with vertices at %f / %f and %f / %f." % (self.start.x, self.start.y, self.end.x, self.end.y)
 
@@ -188,4 +186,3 @@ if __name__ == "__main__":
 
     print "dimensions: ", graph.dimensions()
     
-    print_graph(graph)
