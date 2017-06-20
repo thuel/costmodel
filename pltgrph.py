@@ -5,7 +5,6 @@
 
 #import essential modules, libraries and methods/functions
 from Tkinter import *
-from netwrkgrph import *
 
 zoom = 1
 mirror = 150
@@ -69,7 +68,5 @@ def add_points_from_list(can, lst):
 
 if __name__=="__main__":
     window = init_canvas(300, 150)
-    lines = [Edge(Vertice(20,50),Vertice(0,0)),Edge(Vertice(20,50),Vertice(10,10)),Edge(Vertice(20,50),Vertice(70,50))]
-    add_lines_from_list(window, lines)
 
     mainloop()
