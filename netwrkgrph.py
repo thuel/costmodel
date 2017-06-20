@@ -8,6 +8,7 @@ from math import sqrt, asin, degrees
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
+from pltgrph import *
 
 """Define classes of this library
 """
@@ -91,6 +92,40 @@ class Graph(object):
         else:
             return False
 
+    def min_corner_xy(self):
+        """Returns the minimum point of the rectangle spanwning the graph
+        as tuple of coordinates.
+        """
+        min_x = float("inf")
+        min_y = float("inf")
+        d = self.vertices
+        for i in d:
+            vertice = d[i]
+            min_x = min(vertice.x, min_x)
+            min_y = min(vertice.y, min_y)
+        return (min_x, min_y)
+
+    def max_corner_xy(self):
+        """Returns the minimum point of the rectangle spanwning the graph
+        as tuple of coordinates.
+        """
+        max_x = -float("inf")
+        max_y = -float("inf")
+        d = self.vertices
+        for i in d:
+            vertice = d[i]
+            max_x = max(vertice.x, max_x)
+            max_y = max(vertice.y, max_y)
+        return (max_x, max_y)
+
+    def dimensions(self):
+        """Returns the width and the height of the graph as tuple.
+        """
+        min_x, min_y = self.min_corner_xy()
+        max_x, max_y = self.max_corner_xy()
+        return (max_x - min_x, max_y - min_y)
+        
+
 def get_connecting_edges(vertice, edges):
     """The edges - given as a dictionary of edge objects - connecting a given vertice
        object to a graph are returned as list.
@@ -137,8 +172,18 @@ def plot_graph(grph):
     for edge in grph.edges:
         e = grph.edges[edge]
         vert_list.append((e.start.x, e.start.y))
-        vert_list.append((e.end.x, e.end.y))
         code_list.append(Path.MOVETO)
+        inter = e.intermediates
+        if inter != [] and len(inter) % 2 == 0:
+            item1 = len(inter) / 2 - 1
+            item2 = item1 + 1
+            vert_list.append(((inter[item1][0]+inter[item2][0])/2, (inter[item1][1]+inter[item2][1])/2))
+            code_list.append(Path.CURVE3)
+        elif inter != [] and len(inter) % 2 == 1:
+            item = (len(inter) + 1 ) / 2 - 1
+            vert_list.append((inter[item][0], inter[item][1]))
+            code_list.append(Path.CURVE3)                             
+        vert_list.append((e.end.x, e.end.y))    
         code_list.append(Path.LINETO)
     path = Path(vert_list, code_list)
     figure = plt.figure()
@@ -153,9 +198,10 @@ if __name__ == "__main__":
     graph=Graph()
     graph.add_edge(2,5,1,1)
     graph.add_edge(2,5,7,5)
+    graph.add_edge(2,5,3,6)
     graph.add_edge(3,3,1,1)
     graph.add_edge(3,6,7,5)
-    graph.add_edge(0,0,1,1,[(0.25,0.3),(0.5,0.65),(0.75,0.8)])
+    graph.add_edge(0,0,1,1,[(0.25,0.3),(0.5,0.8),(0.75,0.8)])
     graph.add_edge(0,2,1,1)
     graph.add_edge(1,1,6,1)
     graph.add_edge(3,3,4,2)
@@ -168,4 +214,10 @@ if __name__ == "__main__":
         e = graph.edges[edge]
         print e, e.length()
 
-    plot_graph(graph)
+    print graph.min_corner_xy()
+    print graph.max_corner_xy()
+
+    print "dimensions: ", graph.dimensions()
+    
+    print_graph(graph)
+#    plot_graph(graph)
