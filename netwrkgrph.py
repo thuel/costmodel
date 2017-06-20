@@ -5,9 +5,6 @@
 
 #import essential modules, libraries and methods/functions
 from math import sqrt, asin, degrees
-import matplotlib.pyplot as plt
-from matplotlib.path import Path
-import matplotlib.patches as patches
 from pltgrph import *
 
 """Define classes of this library
@@ -165,34 +162,6 @@ def distance(p1, p2, i=list(), dist=0):
         x2, y2 = i[0]
         dist += sqrt((p1.x - x2) ** 2 + (p1.y - y2) ** 2)
         return distance(Vertice(x2,y2), p2, i[1:], dist)
-
-def plot_graph(grph):
-    vert_list = []
-    code_list = []
-    for edge in grph.edges:
-        e = grph.edges[edge]
-        vert_list.append((e.start.x, e.start.y))
-        code_list.append(Path.MOVETO)
-        inter = e.intermediates
-        if inter != [] and len(inter) % 2 == 0:
-            item1 = len(inter) / 2 - 1
-            item2 = item1 + 1
-            vert_list.append(((inter[item1][0]+inter[item2][0])/2, (inter[item1][1]+inter[item2][1])/2))
-            code_list.append(Path.CURVE3)
-        elif inter != [] and len(inter) % 2 == 1:
-            item = (len(inter) + 1 ) / 2 - 1
-            vert_list.append((inter[item][0], inter[item][1]))
-            code_list.append(Path.CURVE3)                             
-        vert_list.append((e.end.x, e.end.y))    
-        code_list.append(Path.LINETO)
-    path = Path(vert_list, code_list)
-    figure = plt.figure()
-    ax = figure.add_subplot(1,1,1)
-    patch = patches.PathPatch(path, facecolor='none', lw=2)
-    ax.add_patch(patch)
-    xs, ys = zip(*vert_list)
-    ax.plot(xs, ys, 'ro')
-    plt.show()
         
 if __name__ == "__main__":
     graph=Graph()
@@ -220,4 +189,3 @@ if __name__ == "__main__":
     print "dimensions: ", graph.dimensions()
     
     print_graph(graph)
-#    plot_graph(graph)
