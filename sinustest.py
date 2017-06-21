@@ -8,9 +8,11 @@ def sinus_line_points(startx, starty, endx, endy, step=0.25):
     xgses = [ i*step for i in range(npoints) ] # start and end to be removed
     # ystep = (endy-starty) / npoints
     yies = [ ]
-    for x in xgses[1:npoints]:
+    lst = xgses[1:npoints-1]
+    print lst
+    for x in lst:
         yies.append((endy-starty) * (x - sin(radians(x*360))*(step/sin(radians(step*360)))))
-    return lists_to_tuples([x + startx for x in xgses ], [y + starty for y in yies])
+    return lists_to_tuples([x + startx for x in lst ], [y + starty for y in yies])
 
 def lists_to_tuples(list1, list2):
     if len(list1) == len(list2):
