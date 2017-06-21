@@ -8,12 +8,13 @@ from Tkinter import *
 
 zoom = 1
 mirror = 150
+border = 10
 
 def print_graph(graph):
     global zoom
     width, height = graph.dimensions()
     zoom_factor((width, height))
-    window = init_canvas(width * zoom, height * zoom)
+    window = init_canvas(width * zoom + border * 2, height * zoom + border * 2)
     lines = [graph.edges[i] for i in graph.edges]
     add_lines_from_list(window, lines)
     points = [graph.vertices[i] for i in graph.vertices]
@@ -36,8 +37,8 @@ def zoom_factor(dimensions, w_max=500, h_max=500):
 def init_canvas(w=300, h=150):
     """Initialize a canvas with width w and height h.
     """
-    global mirror
-    mirror = h + 2
+    global mirror, border
+    mirror = h - border * 2 + 2
     master = Tk()
     window = Canvas(master, width=w, height=h)
     window.pack()
@@ -46,14 +47,13 @@ def init_canvas(w=300, h=150):
 def add_line(can, edge):
     """Add a line representing an Edge() object to canvas can.
     """
-    global zoom, mirror
+    global zoom, mirror, border
     axay = [(edge.start.x, edge.start.y)]
     zxzy = [(edge.end.x, edge.end.y)]
     interlst = edge.intermediates
     points = axay + interlst + zxzy
     for i in range(len(points)-1):
-        can.create_line(points[i][0] * zoom, mirror - points[i][1] * zoom, points[i+1][0] * zoom, mirror - points[i+1][1] * zoom) 
-    #can.create_line(edge.start.x * zoom, mirror - edge.start.y * zoom, edge.end.x * zoom, mirror - edge.end.y * zoom)
+        can.create_line(points[i][0] * zoom + border, mirror - points[i][1] * zoom + border, points[i+1][0] * zoom + border, mirror - points[i+1][1] * zoom + border) 
 
 def add_lines_from_list(can, lst):
     for line in lst:
@@ -63,9 +63,9 @@ def add_point(can, vertice):
     """Add a line with starting coordinates ax/ay and ending coordinates
     zx/zy to canvas can.
     """
-    global zoom, mirror
+    global zoom, mirror, border
     t = 2 # line thickness
-    can.create_oval(vertice.x * zoom - t, mirror - (vertice.y * zoom - t), (vertice.x * zoom + t), mirror - (vertice.y * zoom + t), fill="black")
+    can.create_oval(vertice.x * zoom - t + border, mirror - (vertice.y * zoom - t) + border, vertice.x * zoom + t + border, mirror - (vertice.y * zoom + t) + border, fill="black")
 
 def add_points_from_list(can, lst):
     for point in lst:
