@@ -44,11 +44,16 @@ def init_canvas(w=300, h=150):
     return window
 
 def add_line(can, edge):
-    """Add a line with starting coordinates ax/ay and ending coordinates
-    zx/zy to canvas can.
+    """Add a line representing an Edge() object to canvas can.
     """
     global zoom, mirror
-    can.create_line(edge.start.x * zoom, mirror - edge.start.y * zoom, edge.end.x * zoom, mirror - edge.end.y * zoom)
+    axay = [(edge.start.x, edge.start.y)]
+    zxzy = [(edge.end.x, edge.end.y)]
+    interlst = edge.intermediates
+    points = axay + interlst + zxzy
+    for i in range(len(points)-1):
+        can.create_line(points[i][0] * zoom, mirror - points[i][1] * zoom, points[i+1][0] * zoom, mirror - points[i+1][1] * zoom) 
+    #can.create_line(edge.start.x * zoom, mirror - edge.start.y * zoom, edge.end.x * zoom, mirror - edge.end.y * zoom)
 
 def add_lines_from_list(can, lst):
     for line in lst:
