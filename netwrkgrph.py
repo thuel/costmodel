@@ -153,6 +153,10 @@ def calc_neighbours(vertices, edges):
         vertices[vertice].neighbours = get_neighbours(vertices[vertice], edges)
 
 def distance(p1, p2, i=list(), dist=0):
+    """Calculate the distance between two points p1 and p2. optionally a list of
+    intermediate points between p1 and p2 and a starting distance can be given to
+    the function. Intermediate points allow to represent curved lines.
+    """
     if len(i) == 0:
         dist += sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
         return dist
