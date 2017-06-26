@@ -1,0 +1,9 @@
+cost model documentation
+
+=== parts ===
+1. netwrkgrph.py: containing class definitions and methods for network graph, vertice and edge objects. 
+	Initialize, manage and calculate network graphs with this script.
+2. pltgrph.py: script containing methods to plot graph objects with help of tkinter in a gui.
+
+
+=== model concept / setup ===
