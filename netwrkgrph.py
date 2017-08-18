@@ -4,7 +4,10 @@
 """
 
 #import essential modules, libraries and methods/functions
+from __future__ import (absolute_import, division, print_function, unicode_literals)
+from builtins import *
 from math import sqrt, asin, degrees
+
 
 """Define classes of this library
 """
@@ -68,7 +71,7 @@ class Graph(object):
             self.add_vertice(end)
         new_edge = Edge(start, end, intermediates)
         if self.check_edge(new_edge):
-            print "%s already exists. Doing noting" % new_edge
+            print("%s already exists. Doing noting" % new_edge)
         else:
             self.edges[new_edge.id()] = new_edge
 
@@ -179,14 +182,13 @@ if __name__ == "__main__":
     calc_neighbours(graph.vertices, graph.edges)
     for vertice in graph.vertices:
         #print graph.get_connecting_edges(graph.vertices[vertice])
-        print "neighbours: ", graph.vertices[vertice].neighbours
+        print("neighbours: ", graph.vertices[vertice].neighbours)
 
     for edge in graph.edges:
         e = graph.edges[edge]
-        print e, e.length()
+        print(e, e.length())
 
-    print graph.min_corner_xy()
-    print graph.max_corner_xy()
+    print(graph.min_corner_xy())
+    print(graph.max_corner_xy())
 
-    print "dimensions: ", graph.dimensions()
-    
+    print("dimensions: ", graph.dimensions())
