@@ -40,5 +40,8 @@ if __name__=="__main__":
     graph.add_edge(1,1,6,1)
     graph.add_edge(3,3,4,2)
     calc_neighbours(graph.vertices, graph.edges)
+    
+    dijkstra(graph, '000', '075')
+    dijkstra(graph, '011', '011')
 
     print_graph(graph)
