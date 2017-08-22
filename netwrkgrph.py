@@ -13,13 +13,14 @@ from math import sqrt, asin, degrees
 """
 
 class Vertice(object):
-    """Vertice to be used in a network graph. Attributes: x and y coordinates, neigbour vertices,
-        type.
+    """Vertice to be used in a network graph. Attributes: x and y coordinates, neighbour vertices,
+    and assigned graph object.
     """
-    def __init__(self, x=0.0, y=0.0, neighbours={}):
+    def __init__(self, x=0.0, y=0.0, neighbours={}, graph=None):
         self.x = x
         self.y = y
         self.neighbours = neighbours
+        self.graph = graph
 
     def __str__(self):
         return "Vertice with coordinates: %f / %f" % (self.x, self.y)
@@ -27,23 +28,35 @@ class Vertice(object):
     def id(self):
         return str(0) + str(self.x) + str(self.y)
 
+    def get_neighbours(self):
+        assert self.graph is not None, 'Can not get neighbours: vertice not part of graph!'
+        calc_neighbours({self.id(): self}, self.graph.edges)
+
 class Edge(object):
-    """Edge to be used in a network graph. Attributes: start, end as Vertice objects.
+    """Edge to be used in a network graph. Attributes: start, end as Vertice objects, 
+    intermediate points as a list of coordinate tuples and the assigned graph object.
     """
-    def __init__(self, start=Vertice(0.0,0.0), end=Vertice(1.0,1.0), intermediates=list()):
+    def __init__(self, start=Vertice(0.0,0.0), end=Vertice(1.0,1.0), intermediates=list(), graph=None):
         self.start = start
         self.end = end
         self.sort_coordinates()
         self.intermediates = intermediates
+        self.graph = graph
         
     def __str__(self):
         return "Edge with vertices at %f / %f and %f / %f." % (self.start.x, self.start.y, self.end.x, self.end.y)
-
+        
     def length(self):
         return distance(self.start, self.end, self.intermediates)
 
     def id(self):
-        return str(9) + str(self.start.x) + str(self.start.y) + str(self.end.x) + str(self.end.y)
+        """Create a unique id for an edge object. Set together from coordinates of
+        start and end eventually joined by the intermediate points' coordinates.
+        """
+        interm = ""
+        for t in self.intermediates:
+            interm = interm + str(t[0]) + str(t[1])
+        return str(9) + str(self.start.x) + str(self.start.y) + str(self.end.x) + str(self.end.y) + interm
 
     def sort_coordinates(self):
         if self.start.x > self.end.x:
@@ -63,28 +76,43 @@ class Graph(object):
         return "Graph with vertices %s and edges %s." % (self.vertices, self.edges)
 
     def add_edge(self, x1, y1, x2, y2, intermediates=list()):
+        """Add an edge to the graph. Needs x/y coordinates of start and end vertice.
+        Optional: a list of intermediate coordinate tuples.
+        """
         start = self.vertices.get(str(0) + str(x1) + str(y1), Vertice(x1,y1))
-        if not self.check_vertice(start):
-            self.add_vertice(start)
+        self.add_vertice(start)
+        """Add the starting vertice to the graph
+        """
         end = self.vertices.get(str(0) + str(x2) + str(y2), Vertice(x2,y2))
-        if not self.check_vertice(end):
-            self.add_vertice(end)
+        self.add_vertice(end)
+        """Add the ending vertice to the graph
+        """
         new_edge = Edge(start, end, intermediates)
         if self.check_edge(new_edge):
             print("%s already exists. Doing noting" % new_edge)
         else:
             self.edges[new_edge.id()] = new_edge
+            new_edge.graph = self
+        """Add edge to graph if it doesn't exist.
+        """
 
     def add_vertice(self, vertice):
-        self.vertices[vertice.id()] = vertice
+        """Add vertice to the graph if it doesn't exist already."""
+        if not self.check_vertice(vertice):
+            self.vertices[vertice.id()] = vertice
+            vertice.graph = self
 
     def check_vertice(self, vertice):
+        """Check if a given vertice is already in the graph.
+        """
         if vertice.id() in self.vertices:
             return True
         else:
             return False
 
     def check_edge(self, edge):
+        """Check if a given edge is already in the graph.
+        """
         if edge.id() in self.edges:
             return True
         else:
@@ -123,6 +151,9 @@ class Graph(object):
         max_x, max_y = self.max_corner_xy()
         return (max_x - min_x, max_y - min_y)
         
+"""Functions used by the netwrkgrph classes, but which may eventually be used independent
+of those classes are declared hereafter:
+"""
 
 def get_connecting_edges(vertice, edges):
     """The edges - given as a dictionary of edge objects - connecting a given vertice
@@ -136,16 +167,15 @@ def get_connecting_edges(vertice, edges):
 
 def get_neighbours(vertice, edges):
     """Get a dictionary of vertice objects of the neighbouring vertices for a given
-       vertice object and the edges of the graph. TODO: change order of calling
-       connecting edges and the neighbour calculation.
+       vertice object and the edges of the graph.
     """
     n = {}
     edges = get_connecting_edges(vertice, edges)
     for edge in edges:
         if edge.start is vertice:
-            n[edge.end.id()] = edge.end
+            n[edge.end.id()] = edge.length()
         elif edge.end is vertice:
-            n[edge.start.id()] = edge.start
+            n[edge.start.id()] = edge.length()
     return n
 
 def calc_neighbours(vertices, edges):
@@ -159,6 +189,8 @@ def distance(p1, p2, i=list(), dist=0):
     """Calculate the distance between two points p1 and p2. optionally a list of
     intermediate points between p1 and p2 and a starting distance can be given to
     the function. Intermediate points allow to represent curved lines.
+    The optional starting distance is needed in the self referencing part of the
+    function with intermediates.
     """
     if len(i) == 0:
         dist += sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
@@ -167,7 +199,61 @@ def distance(p1, p2, i=list(), dist=0):
         x2, y2 = i[0]
         dist += sqrt((p1.x - x2) ** 2 + (p1.y - y2) ** 2)
         return distance(Vertice(x2,y2), p2, i[1:], dist)
+
+def dijkstra(graph,src,dest,visited=[],distances={},predecessors={}):
+    """ calculates a shortest path tree routed in src
+    """
+    assert src in graph.vertices, 'The root of the shortest path tree cannot be found'
+    assert dest in graph.vertices, 'The root of the shortest path tree cannot be found'
+    """ check if src and dest are part of the network graph.
+    """
+    if src == dest:
+        """ Ending condition.
+        """
+        if len(distances) == 0:
+            distances[dest] = 0
+        path = []
+        pred = dest
+        while pred != None:
+            path.append(pred)
+            pred=predecessors.get(pred,None)
+        print('shortest path %s is %d long.' % (str(path), distances[dest]))
+        """ Build the shortes path and display it.
+        """
+        visited = []
+        distances = {}
+        predecessors = {}
+        """ Reset the key variables to not influence following calculations
+        """
+    else:
+        if not visited:
+            distances[src] = 0
+        """ Initialise the distance in the initial run.
+        """
+        for neighbour in graph.vertices[src].neighbours:
+            if neighbour not in visited:
+                new_distance = distances[src] + graph.vertices[src].neighbours[neighbour]
+                if new_distance < distances.get(neighbour, float('inf')):
+                    distances[neighbour] = new_distance
+                    predecessors[neighbour] = src
+                    print('predecessors: %s' % predecessors)
+        """ Visit the neighbours and calculate distances.
+        """
+        visited.append(src)
+        """ Mark the src as visited.
+        """
+        unvisited = {}
+        for vertice in graph.vertices:
+            if vertice not in visited:
+                unvisited[vertice] = distances.get(vertice, float('inf'))
+        """ Prepare for recursion of the dijkstra function.
+        """
+        new_src = min(unvisited, key=unvisited.get)
+        return dijkstra(graph, new_src, dest, visited, distances, predecessors)
+        """ Recurse through the dijkstra function with the new "source"
+        """
         
+    
 if __name__ == "__main__":
     graph=Graph()
     graph.add_edge(2,5,1,1)
@@ -176,6 +262,7 @@ if __name__ == "__main__":
     graph.add_edge(3,3,1,1)
     graph.add_edge(3,6,7,5)
     graph.add_edge(0,0,1,1,[(0.25,0.3),(0.5,0.8),(0.75,0.8)])
+    graph.add_edge(0,0,1,1,[(0.25,0.2),(0.5,0.2),(0.75,0.2)])
     graph.add_edge(0,2,1,1)
     graph.add_edge(1,1,6,1)
     graph.add_edge(3,3,4,2)
@@ -192,3 +279,8 @@ if __name__ == "__main__":
     print(graph.max_corner_xy())
 
     print("dimensions: ", graph.dimensions())
+    print([edge.id() for edge in graph.edges.values()])
+
+    dijkstra(graph, '000', '075')
+    dijkstra(graph, '011', '011')
+    
