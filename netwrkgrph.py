@@ -7,6 +7,7 @@
 from __future__ import (absolute_import, division, print_function, unicode_literals)
 from builtins import *
 from math import sqrt, asin, degrees
+from priodict import priorityDictionary
 
 
 """Define classes of this library
@@ -200,80 +201,83 @@ def distance(p1, p2, i=list(), dist=0):
         dist += sqrt((p1.x - x2) ** 2 + (p1.y - y2) ** 2)
         return distance(Vertice(x2,y2), p2, i[1:], dist)
 
-def calc_shortest_paths(graph, dest, vertices_info=None):
-    """ Returns a dictionary with the vertice ids of the Graph object as keys and
-    the path, distance and next (neighbour) to the dest as values for each Vertice
-    object in the Graph object.
-    """
-    if vertices_info is None:
-        vertices_info = {}
-    for vertice in graph.vertices:
-        dij = dijkstra(graph, vertice, dest)
-        vertices_info[vertice] = {'path': dij[3], 'next': [key for key in dij[2] if dij[2][key] == vertice], 'distance': dij[1][dest]}
-    return vertices_info
+def dijkstra(graph, start, end=None):
+    """ Find shortest paths from the  start vertex to all vertices nearer
+    than or equal to the end.
 
-def dijkstra(graph,src,dest,visited=None,distances=None,predecessors=None, run=1):
-    """ Calculates a shortest path tree routed in src to dest for the vertices in
-    a given Graph object. Returns as tuple with visited vertices, distances, predecessors
-    and the path to the source.
+    The input graph "graph" is assumed to be Graph object. A vertex is a   
+    Vertice object. For any vertex v, graph.vertices[v].neighbours is itself 
+    a dictionary, indexed by the neighbors of v. For any edge v->w, 
+    graph.vertices[v].neighbours[w] is the length of the edge.
+
+    The output is a pair (D,P) where D[v] is the distance from start to
+    v and P[v] is the predecessor of v along the shortest path from s to
+    v.
+
+    Dijkstra's algorithm is only guaranteed to work correctly when all
+    edge lengths are positive. This code does not verify this property
+    for all edges (only the edges examined until the end vertex is
+    reached), but will correctly compute shortest paths even for some
+    graphs with negative edges, and will raise an exception if it
+    discovers that a negative edge has caused it to make a mistake.
     """
-    assert src in graph.vertices, 'The root of the shortest path tree cannot be found'
-    assert dest in graph.vertices, 'The root of the shortest path tree cannot be found'
-    """ check if src and dest are part of the network graph.
+
+    D = {}  # dictionary of final distances
+    P = {}  # dictionary of predecessors
+    Q = priorityDictionary()  # estimated distances of non-final vertices
+    Q[start] = 0
+
+    for vertice in Q:
+        D[vertice] = Q[vertice]
+        if vertice == end:
+            break
+
+        for neighbour in graph.vertices[vertice].neighbours:
+            length = D[vertice] + graph.vertices[vertice].neighbours[neighbour]
+            if neighbour in D:
+                if length < D[neighbour]:
+                    raise ValueError("Dijkstra: found better path to already-final vertex")
+            elif neighbour not in Q or length < Q[neighbour]:
+                Q[neighbour] = length
+                P[neighbour] = vertice
+
+    return (D, P, start)
+
+
+def shortest_path(graph, start, end):
+    """ Find a single shortest path from the given start vertex to the given
+    end vertex. The input has the same conventions as Dijkstra(). The
+    output is a list of the vertices in order along the shortest path.
     """
-    if visited is None:
-        visited = []
-    if distances is None:
-        distances = {}
-    if predecessors is None:
-        predecessors = {}
-    """ Reset the key mutable objects to not be influenced by following calls to
-    dijkstra().
-    """
-    if src == dest:
-        """ Ending condition.
-        """
-        if len(distances) == 0:
-            distances[dest] = 0
-        path = []
-        pred = dest
-        print('predecessors: %s' % predecessors)
-        while pred != None:
-            path.append(pred)
-            pred=predecessors.get(pred,None)
-        print('shortest path %s is %f long.' % (str(path), distances[dest]))
-        """ Build the shortes path and display it.
-        """
-        return (visited, distances, predecessors, path)
-        """ Return the resulting mutable objects.
-        """
-    else:
-        if not visited:
-            distances[src] = 0
-        """ Initialise the distance in the initial run.
-        """
-        for neighbour in graph.vertices[src].neighbours:
-            if neighbour not in visited:
-                new_distance = distances[src] + graph.vertices[src].neighbours[neighbour]
-                if new_distance < distances.get(neighbour, float('inf')):
-                    distances[neighbour] = new_distance
-                    predecessors[neighbour] = src
-        """ Visit the neighbours and calculate distances.
-        """
-        visited.append(src)
-        """ Mark the src as visited.
-        """
-        unvisited = {}
-        for vertice in graph.vertices:
-            if vertice not in visited:
-                unvisited[vertice] = distances.get(vertice, float('inf'))
-        """ Prepare for recursion of the dijkstra function.
-        """
-        new_src = min(unvisited, key=unvisited.get)
-        return dijkstra(graph, new_src, dest, visited, distances, predecessors, run+1)
-        """ Recurse through the dijkstra function with the new "source"
-        """
+
+    D, P = dijkstra(graph, start, end)[:2]
+    path = []
+    while True:
+        path.append(end)
+        if end == start:
+            break
+        end = P[end]
+    path.reverse()
+    return path
         
+def all_paths(dijkstra):
+    """ Returns a dict of all the paths that were calculated by dijkstra().
+    """
+    D, P, start = dijkstra
+    paths = {}
+    for vertice in D:
+        p_index = vertice
+        path = []
+        while True:
+            path.append(vertice)
+            if vertice == start:
+                break
+            vertice = P[vertice]
+        path.reverse()
+        paths[p_index] = path
+    return paths
+
+
     
 if __name__ == "__main__":
     graph=Graph()
@@ -291,6 +295,7 @@ if __name__ == "__main__":
     graph.add_edge(7,5,10,8)
 
     calc_neighbours(graph.vertices, graph.edges)
+    
     for vertice in graph.vertices:
         #print graph.get_connecting_edges(graph.vertices[vertice])
         print("neighbours: ", graph.vertices[vertice].neighbours)
@@ -305,11 +310,12 @@ if __name__ == "__main__":
     print("dimensions: ", graph.dimensions())
     print([edge.id() for edge in graph.edges.values()])
 
-    d2 = dijkstra(graph, '011', '075')
+    d2 = dijkstra(graph, '011')
     d1 = dijkstra(graph, '011', '011')
     
-    print('distances d2: %s' % d2[1])
+    print('distances d2: %s' % d2[0])
 
-    result = calc_shortest_paths(graph, '011')
-    for i in result:
-        print('%s : %s' % (i,result[i]))
+    result = shortest_path(graph,'0108', '011')
+    print(result)
+
+    print(all_paths(dijkstra(graph, '011')))
