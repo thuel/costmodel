@@ -17,11 +17,14 @@ class Vertice(object):
     """Vertice to be used in a network graph. Attributes: x and y coordinates, neighbour vertices,
     and assigned graph object.
     """
-    def __init__(self, x=0.0, y=0.0, neighbours={}, graph=None):
+    def __init__(self, x=0.0, y=0.0, graph=None):
+        if graph is None:
+            graph = None
         self.x = x
         self.y = y
-        self.neighbours = neighbours
         self.graph = graph
+        self.neighbours = {}
+        self.edges = {}
 
     def __str__(self):
         return "Vertice with coordinates: %f / %f" % (self.x, self.y)
@@ -43,6 +46,13 @@ class Edge(object):
         self.sort_coordinates()
         self.intermediates = intermediates
         self.graph = graph
+
+        length = self.length()
+        start.neighbours[end.id()] = length
+        start.edges[self.id()] = length
+        end.neighbours[start.id()] = length
+        end.edges[self.id()] = length
+        
         
     def __str__(self):
         return "Edge with vertices at %f / %f and %f / %f." % (self.start.x, self.start.y, self.end.x, self.end.y)
@@ -294,7 +304,7 @@ if __name__ == "__main__":
     graph.add_edge(7,5,6,1)
     graph.add_edge(7,5,10,8)
 
-    calc_neighbours(graph.vertices, graph.edges)
+#    calc_neighbours(graph.vertices, graph.edges)
     
     for vertice in graph.vertices:
         #print graph.get_connecting_edges(graph.vertices[vertice])
