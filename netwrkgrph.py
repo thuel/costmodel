@@ -200,12 +200,35 @@ def distance(p1, p2, i=list(), dist=0):
         dist += sqrt((p1.x - x2) ** 2 + (p1.y - y2) ** 2)
         return distance(Vertice(x2,y2), p2, i[1:], dist)
 
-def dijkstra(graph,src,dest,visited=[],distances={},predecessors={}):
-    """ calculates a shortest path tree routed in src
+def calc_shortest_paths(graph, dest, vertices_info=None):
+    """ Returns a dictionary with the vertice ids of the Graph object as keys and
+    the path, distance and next (neighbour) to the dest as values for each Vertice
+    object in the Graph object.
+    """
+    if vertices_info is None:
+        vertices_info = {}
+    for vertice in graph.vertices:
+        dij = dijkstra(graph, vertice, dest)
+        vertices_info[vertice] = {'path': dij[3], 'next': [key for key in dij[2] if dij[2][key] == vertice], 'distance': dij[1][dest]}
+    return vertices_info
+
+def dijkstra(graph,src,dest,visited=None,distances=None,predecessors=None, run=1):
+    """ Calculates a shortest path tree routed in src to dest for the vertices in
+    a given Graph object. Returns as tuple with visited vertices, distances, predecessors
+    and the path to the source.
     """
     assert src in graph.vertices, 'The root of the shortest path tree cannot be found'
     assert dest in graph.vertices, 'The root of the shortest path tree cannot be found'
     """ check if src and dest are part of the network graph.
+    """
+    if visited is None:
+        visited = []
+    if distances is None:
+        distances = {}
+    if predecessors is None:
+        predecessors = {}
+    """ Reset the key mutable objects to not be influenced by following calls to
+    dijkstra().
     """
     if src == dest:
         """ Ending condition.
@@ -214,16 +237,15 @@ def dijkstra(graph,src,dest,visited=[],distances={},predecessors={}):
             distances[dest] = 0
         path = []
         pred = dest
+        print('predecessors: %s' % predecessors)
         while pred != None:
             path.append(pred)
             pred=predecessors.get(pred,None)
-        print('shortest path %s is %d long.' % (str(path), distances[dest]))
+        print('shortest path %s is %f long.' % (str(path), distances[dest]))
         """ Build the shortes path and display it.
         """
-        visited = []
-        distances = {}
-        predecessors = {}
-        """ Reset the key variables to not influence following calculations
+        return (visited, distances, predecessors, path)
+        """ Return the resulting mutable objects.
         """
     else:
         if not visited:
@@ -236,7 +258,6 @@ def dijkstra(graph,src,dest,visited=[],distances={},predecessors={}):
                 if new_distance < distances.get(neighbour, float('inf')):
                     distances[neighbour] = new_distance
                     predecessors[neighbour] = src
-                    print('predecessors: %s' % predecessors)
         """ Visit the neighbours and calculate distances.
         """
         visited.append(src)
@@ -249,7 +270,7 @@ def dijkstra(graph,src,dest,visited=[],distances={},predecessors={}):
         """ Prepare for recursion of the dijkstra function.
         """
         new_src = min(unvisited, key=unvisited.get)
-        return dijkstra(graph, new_src, dest, visited, distances, predecessors)
+        return dijkstra(graph, new_src, dest, visited, distances, predecessors, run+1)
         """ Recurse through the dijkstra function with the new "source"
         """
         
@@ -266,6 +287,9 @@ if __name__ == "__main__":
     graph.add_edge(0,2,1,1)
     graph.add_edge(1,1,6,1)
     graph.add_edge(3,3,4,2)
+    graph.add_edge(7,5,6,1)
+    graph.add_edge(7,5,10,8)
+
     calc_neighbours(graph.vertices, graph.edges)
     for vertice in graph.vertices:
         #print graph.get_connecting_edges(graph.vertices[vertice])
@@ -281,6 +305,11 @@ if __name__ == "__main__":
     print("dimensions: ", graph.dimensions())
     print([edge.id() for edge in graph.edges.values()])
 
-    dijkstra(graph, '000', '075')
-    dijkstra(graph, '011', '011')
+    d2 = dijkstra(graph, '011', '075')
+    d1 = dijkstra(graph, '011', '011')
     
+    print('distances d2: %s' % d2[1])
+
+    result = calc_shortest_paths(graph, '011')
+    for i in result:
+        print('%s : %s' % (i,result[i]))
