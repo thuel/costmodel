@@ -36,12 +36,37 @@ if __name__=="__main__":
     graph.add_edge(3,3,1,1, sinus_line_points(1,1,3,0.1)) 
     graph.add_edge(3,6,7,5)
     graph.add_edge(0,0,1,1,[(0.2,0.375),(0.375,0.625),(0.7,0.875)])
+    graph.add_edge(0,0,1,1,[(0.2,0.025),(0.6,0.45),(0.8,0.6)])
     graph.add_edge(0,2,1,1)
     graph.add_edge(1,1,6,1)
     graph.add_edge(3,3,4,2)
+    graph.add_edge(7,5,6,1)
+    graph.add_edge(7,5,10,8)
+
     calc_neighbours(graph.vertices, graph.edges)
     
-    dijkstra(graph, '000', '075')
-    dijkstra(graph, '011', '011')
+    for vertice in graph.vertices:
+        #print graph.get_connecting_edges(graph.vertices[vertice])
+        print("neighbours: ", graph.vertices[vertice].neighbours)
+
+    for edge in graph.edges:
+        e = graph.edges[edge]
+        print(e, e.length())
+
+    print(graph.min_corner_xy())
+    print(graph.max_corner_xy())
+
+    print("dimensions: ", graph.dimensions())
+    print([edge.id() for edge in graph.edges.values()])
+
+    d2 = dijkstra(graph, '011')
+    d1 = dijkstra(graph, '011', '011')
+    
+    print('distances d2: %s' % d2[0])
+
+    result = shortest_path(graph,'0108', '011')
+    print(result)
+
+    print(all_paths(dijkstra(graph, '011')))
 
     print_graph(graph)
