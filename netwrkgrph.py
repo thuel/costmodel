@@ -15,7 +15,7 @@ from priodict import priorityDictionary
 
 class Vertice(object):
     """Vertice to be used in a network graph. Attributes: x and y coordinates, neighbour vertices,
-    and assigned graph object.
+    adjoining edges and assigned graph object.
     """
     def __init__(self, x=0.0, y=0.0, graph=None):
         if graph is None:
@@ -48,9 +48,11 @@ class Edge(object):
         self.graph = graph
 
         length = self.length()
-        start.neighbours[end.id()] = length
+        if length < start.neighbours.get(end.id(),float('inf')):
+            start.neighbours[end.id()] = length
         start.edges[self.id()] = length
-        end.neighbours[start.id()] = length
+        if length < end.neighbours.get(start.id(),float('inf')):
+            end.neighbours[start.id()] = length
         end.edges[self.id()] = length
         
         
@@ -284,7 +286,7 @@ def all_paths(dijkstra):
                 break
             vertice = P[vertice]
         path.reverse()
-        paths[p_index] = path
+        paths[p_index] = {'path': path, 'distance': D[p_index]}
     return paths
 
 
