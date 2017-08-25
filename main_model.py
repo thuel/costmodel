@@ -45,9 +45,9 @@ if __name__=="__main__":
 
     calc_neighbours(graph.vertices, graph.edges)
     
-    for vertice in graph.vertices:
-        #print graph.get_connecting_edges(graph.vertices[vertice])
-        print("neighbours: ", graph.vertices[vertice].neighbours)
+    for vertex in graph.vertices:
+        #print graph.get_connecting_edges(graph.vertices[vertex])
+        print("neighbours: ", graph.vertices[vertex].neighbours)
 
     for edge in graph.edges:
         e = graph.edges[edge]
