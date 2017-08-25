@@ -61,13 +61,13 @@ def add_lines_from_list(can, lst):
     for line in lst:
         add_line(can, line)
 
-def add_point(can, vertice):
+def add_point(can, vertex):
     """Add a line with starting coordinates ax/ay and ending coordinates
     zx/zy to canvas can.
     """
     global zoom, mirror, border
     t = 2 # line thickness
-    can.create_oval(vertice.x * zoom - t + border, mirror - (vertice.y * zoom - t) + border, vertice.x * zoom + t + border, mirror - (vertice.y * zoom + t) + border, fill="black")
+    can.create_oval(vertex.x * zoom - t + border, mirror - (vertex.y * zoom - t) + border, vertex.x * zoom + t + border, mirror - (vertex.y * zoom + t) + border, fill="black")
 
 def add_points_from_list(can, lst):
     for point in lst:
