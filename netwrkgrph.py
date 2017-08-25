@@ -6,7 +6,7 @@
 #import essential modules, libraries and methods/functions
 from __future__ import (absolute_import, division, print_function, unicode_literals)
 from builtins import *
-from math import sqrt, asin, degrees
+from math import sqrt, sin, cos, asin, acos, degrees, radians
 from priodict import priorityDictionary
 
 
@@ -76,7 +76,7 @@ class Edge(object):
             self.start, self.end = (self.end, self.start)
 
     def angle(self):
-        return degrees(asin((self.end.y - self.start.y)/self.length()))
+        return angle(self.start, self.end)
 
 class Graph(object):
     """Graph to be populated by Vertex and Edge objects.
@@ -109,6 +109,14 @@ class Graph(object):
         """Add edge to graph if it doesn't exist.
         """
 
+    def check_edge(self, edge):
+        """Check if a given edge is already in the graph.
+        """
+        if edge.id() in self.edges:
+            return True
+        else:
+            return False
+
     def add_vertex(self, vertex):
         """Add vertex to the graph if it doesn't exist already."""
         if not self.check_vertex(vertex):
@@ -119,14 +127,6 @@ class Graph(object):
         """Check if a given vertex is already in the graph.
         """
         if vertex.id() in self.vertices:
-            return True
-        else:
-            return False
-
-    def check_edge(self, edge):
-        """Check if a given edge is already in the graph.
-        """
-        if edge.id() in self.edges:
             return True
         else:
             return False
@@ -198,20 +198,107 @@ def calc_neighbours(vertices, edges):
     for vertex in vertices:
         vertices[vertex].neighbours = get_neighbours(vertices[vertex], edges)
 
-def distance(p1, p2, i=list(), dist=0):
-    """Calculate the distance between two points p1 and p2. optionally a list of
-    intermediate points between p1 and p2 and a starting distance can be given to
+def distance(v1, v2, i=None, dist=None):
+    """ Calculate the distance between two Vertex objects v1 and v2 and optionally a list
+    of intermediate points between v1 and v2 and a starting distance can be given to
     the function. Intermediate points allow to represent curved lines.
     The optional starting distance is needed in the self referencing part of the
     function with intermediates.
     """
+    if i is None:
+        i = list()
+    if dist is None:
+        dist = 0
+    """ Reset optional arguments to be able to call the function more than once in
+    the same session.
+    """
     if len(i) == 0:
-        dist += sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
+        dist += sqrt((v1.x - v2.x) ** 2 + (v1.y - v2.y) ** 2)
         return dist
     else:
         x2, y2 = i[0]
-        dist += sqrt((p1.x - x2) ** 2 + (p1.y - y2) ** 2)
-        return distance(Vertex(x2,y2), p2, i[1:], dist)
+        dist += sqrt((v1.x - x2) ** 2 + (v1.y - y2) ** 2)
+        return distance(Vertex(x2,y2), v2, i[1:], dist)
+
+def angle(v1, v2):
+    """ Return the angle of the line connecting to Vertex objects.
+    """
+    return degrees(asin((v2.y - v1.y)/distance(v1, v2)))
+
+def near_points(vertex_id, vertices, radius):
+    """ For a given id of a Vertex object "vertex_id" in a dictionary of Vertex
+    objects "vertices", return a dictionary of vertices which are within a given
+    distance "radius" from the Vertex object with id vertex_id.
+    """
+    near_points = {}
+    vertex = vertices[vertex_id]
+    for key, value in vertices.items():
+        """ key: vertex id, value: vertex object
+        """
+        dist = distance(vertex, value)
+        if dist < radius and dist > 0:
+            near_points[key] = value
+    return near_points
+
+def near_edges(vertex, edges, radius):
+    """ Return a dictionary of the nearest edges for a given Vertex object and
+    a dictionary of Edge objects as well a the search radius.
+    """
+    near_edges = {}
+    graph = vertex.graph
+    vertices = graph.vertices
+    sub_vertices = near_points(vertex.id(), vertices, radius)
+    for v_id, vertex in sub_vertices.items():
+        """ v_id: vertex id, vertex: Vertex object
+        """
+        for e_id, edge in vertex.edges.items():
+            """ e_id: edge id, edge: Edge object
+            """
+            if e_id not in near_edges:
+                near_edges[e_id] = graph.edges[e_id]
+    return near_edges
+
+def nearest_point(vertex, radius=3):
+    """ Returns the nearest point to a Vertex object on an existing Edge object.
+    """
+    graph = vertex.graph
+    edges = graph.edges
+    relevant_edges = near_edges(vertex, edges, radius)
+    intersections = {} # dict with edge id as key and Vertex as value
+    for e_id, edge in relevant_edges:
+        a = distance(edge.start, vertex)
+        alpah = radians(angle(edge.start, vertex))
+        beta = radians(edge.angle())
+        gamma = alpha - beta
+        b = a * cos(gamma)
+        xi = cos(beta) * b + edge.start.x
+        yi = sin(beta) * b + edge.start.y
+        if xi < edge.start.x:
+            a = distance(edge.end, vertex)
+            alpah = angle(edge.end, vertex)
+            beta = edge.angle() * -1
+            gamma = alpha - beta
+            b = a * cos(gamma)
+            xi = cos(beta) * b + edge.start.x
+            yi = sin(beta) * b + edge.start.y
+        if xi > edge.start.x and xi < edge.end.x:
+            intersections[edge.id()] = Vertex(xi, yi)
+    pass
+        
+
+def get_vertices_from_edges(edges):
+    """ Returns a dictionary of unique vertices belonging to the edges given in form
+    of a dictionary with edge ids as keys and Edge objects as values.
+    """
+    vertices = {}
+    for e_id, edge in edges.items():
+        """ e_id: edge id, edge: Edge object
+        """
+        if edge.start.id() not in vertices:
+            vertices[edge.start.id()] = edge.start
+        if edge.end.id() not in vertices:
+            vertices[edge.end.id()] = edge.end
+    return vertices
 
 def dijkstra(graph, start, end=None):
     """ Find shortest paths from the  start vertex to all vertices nearer
@@ -331,3 +418,11 @@ if __name__ == "__main__":
     print(result)
 
     print(all_paths(dijkstra(graph, '011')))
+
+    newVertex = Vertex(0.5,1)
+    graph.add_vertex(newVertex)
+    print(near_points(newVertex.id(), graph.vertices, 3))
+    print(near_edges(newVertex, graph.edges, 3))
+
+    for e_id, edge in graph.edges.items():
+        print(e_id, edge.angle())
