@@ -93,11 +93,11 @@ class Graph(object):
         Optional: a list of intermediate coordinate tuples.
         """
         start = self.vertices.get(str(0) + str(x1) + str(y1), Vertex(x1,y1))
-        self.add_vertice(start)
+        self.add_vertex(start)
         """Add the starting vertex to the graph
         """
         end = self.vertices.get(str(0) + str(x2) + str(y2), Vertex(x2,y2))
-        self.add_vertice(end)
+        self.add_vertex(end)
         """Add the ending vertex to the graph
         """
         new_edge = Edge(start, end, intermediates)
@@ -109,13 +109,13 @@ class Graph(object):
         """Add edge to graph if it doesn't exist.
         """
 
-    def add_vertice(self, vertex):
+    def add_vertex(self, vertex):
         """Add vertex to the graph if it doesn't exist already."""
-        if not self.check_vertice(vertex):
+        if not self.check_vertex(vertex):
             self.vertices[vertex.id()] = vertex
             vertex.graph = self
 
-    def check_vertice(self, vertex):
+    def check_vertex(self, vertex):
         """Check if a given vertex is already in the graph.
         """
         if vertex.id() in self.vertices:
