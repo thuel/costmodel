@@ -13,8 +13,8 @@ from priodict import priorityDictionary
 """Define classes of this library
 """
 
-class Vertice(object):
-    """Vertice to be used in a network graph. Attributes: x and y coordinates, neighbour vertices,
+class Vertex(object):
+    """Vertex to be used in a network graph. Attributes: x and y coordinates, neighbour vertices,
     adjoining edges and assigned graph object.
     """
     def __init__(self, x=0.0, y=0.0, graph=None):
@@ -27,20 +27,20 @@ class Vertice(object):
         self.edges = {}
 
     def __str__(self):
-        return "Vertice with coordinates: %f / %f" % (self.x, self.y)
+        return "Vertex with coordinates: %f / %f" % (self.x, self.y)
 
     def id(self):
         return str(0) + str(self.x) + str(self.y)
 
     def get_neighbours(self):
-        assert self.graph is not None, 'Can not get neighbours: vertice not part of graph!'
+        assert self.graph is not None, 'Can not get neighbours: vertex not part of graph!'
         calc_neighbours({self.id(): self}, self.graph.edges)
 
 class Edge(object):
-    """Edge to be used in a network graph. Attributes: start, end as Vertice objects, 
+    """Edge to be used in a network graph. Attributes: start, end as Vertex objects, 
     intermediate points as a list of coordinate tuples and the assigned graph object.
     """
-    def __init__(self, start=Vertice(0.0,0.0), end=Vertice(1.0,1.0), intermediates=list(), graph=None):
+    def __init__(self, start=Vertex(0.0,0.0), end=Vertex(1.0,1.0), intermediates=list(), graph=None):
         self.start = start
         self.end = end
         self.sort_coordinates()
@@ -79,7 +79,7 @@ class Edge(object):
         return degrees(asin((self.end.y - self.start.y)/self.length()))
 
 class Graph(object):
-    """Graph to be populated by Vertice and Edge objects.
+    """Graph to be populated by Vertex and Edge objects.
     """
     def __init__(self, vertices={}, edges={}):
         self.vertices = vertices
@@ -89,16 +89,16 @@ class Graph(object):
         return "Graph with vertices %s and edges %s." % (self.vertices, self.edges)
 
     def add_edge(self, x1, y1, x2, y2, intermediates=list()):
-        """Add an edge to the graph. Needs x/y coordinates of start and end vertice.
+        """Add an edge to the graph. Needs x/y coordinates of start and end vertex.
         Optional: a list of intermediate coordinate tuples.
         """
-        start = self.vertices.get(str(0) + str(x1) + str(y1), Vertice(x1,y1))
+        start = self.vertices.get(str(0) + str(x1) + str(y1), Vertex(x1,y1))
         self.add_vertice(start)
-        """Add the starting vertice to the graph
+        """Add the starting vertex to the graph
         """
-        end = self.vertices.get(str(0) + str(x2) + str(y2), Vertice(x2,y2))
+        end = self.vertices.get(str(0) + str(x2) + str(y2), Vertex(x2,y2))
         self.add_vertice(end)
-        """Add the ending vertice to the graph
+        """Add the ending vertex to the graph
         """
         new_edge = Edge(start, end, intermediates)
         if self.check_edge(new_edge):
@@ -109,16 +109,16 @@ class Graph(object):
         """Add edge to graph if it doesn't exist.
         """
 
-    def add_vertice(self, vertice):
-        """Add vertice to the graph if it doesn't exist already."""
-        if not self.check_vertice(vertice):
-            self.vertices[vertice.id()] = vertice
-            vertice.graph = self
+    def add_vertice(self, vertex):
+        """Add vertex to the graph if it doesn't exist already."""
+        if not self.check_vertice(vertex):
+            self.vertices[vertex.id()] = vertex
+            vertex.graph = self
 
-    def check_vertice(self, vertice):
-        """Check if a given vertice is already in the graph.
+    def check_vertice(self, vertex):
+        """Check if a given vertex is already in the graph.
         """
-        if vertice.id() in self.vertices:
+        if vertex.id() in self.vertices:
             return True
         else:
             return False
@@ -139,9 +139,9 @@ class Graph(object):
         min_y = float("inf")
         d = self.vertices
         for i in d:
-            vertice = d[i]
-            min_x = min(vertice.x, min_x)
-            min_y = min(vertice.y, min_y)
+            vertex = d[i]
+            min_x = min(vertex.x, min_x)
+            min_y = min(vertex.y, min_y)
         return (min_x, min_y)
 
     def max_corner_xy(self):
@@ -152,9 +152,9 @@ class Graph(object):
         max_y = -float("inf")
         d = self.vertices
         for i in d:
-            vertice = d[i]
-            max_x = max(vertice.x, max_x)
-            max_y = max(vertice.y, max_y)
+            vertex = d[i]
+            max_x = max(vertex.x, max_x)
+            max_y = max(vertex.y, max_y)
         return (max_x, max_y)
 
     def dimensions(self):
@@ -168,35 +168,35 @@ class Graph(object):
 of those classes are declared hereafter:
 """
 
-def get_connecting_edges(vertice, edges):
-    """The edges - given as a dictionary of edge objects - connecting a given vertice
+def get_connecting_edges(vertex, edges):
+    """The edges - given as a dictionary of edge objects - connecting a given vertex
        object to a graph are returned as list.
     """
     connecting_edges = []
     for edge in edges:
-        if edges[edge].start is vertice or edges[edge].end is vertice:
+        if edges[edge].start is vertex or edges[edge].end is vertex:
             connecting_edges.append(edges[edge])
     return connecting_edges
 
-def get_neighbours(vertice, edges):
-    """Get a dictionary of vertice objects of the neighbouring vertices for a given
-       vertice object and the edges of the graph.
+def get_neighbours(vertex, edges):
+    """Get a dictionary of vertex objects of the neighbouring vertices for a given
+       vertex object and the edges of the graph.
     """
     n = {}
-    edges = get_connecting_edges(vertice, edges)
+    edges = get_connecting_edges(vertex, edges)
     for edge in edges:
-        if edge.start is vertice:
+        if edge.start is vertex:
             n[edge.end.id()] = edge.length()
-        elif edge.end is vertice:
+        elif edge.end is vertex:
             n[edge.start.id()] = edge.length()
     return n
 
 def calc_neighbours(vertices, edges):
-    """For a dictionary of vertice objctes and a directory of edge objects, calculate
-       the neighbouring vertices of every vertice object.
+    """For a dictionary of vertex objctes and a directory of edge objects, calculate
+       the neighbouring vertices of every vertex object.
     """
-    for vertice in vertices:
-        vertices[vertice].neighbours = get_neighbours(vertices[vertice], edges)
+    for vertex in vertices:
+        vertices[vertex].neighbours = get_neighbours(vertices[vertex], edges)
 
 def distance(p1, p2, i=list(), dist=0):
     """Calculate the distance between two points p1 and p2. optionally a list of
@@ -211,14 +211,14 @@ def distance(p1, p2, i=list(), dist=0):
     else:
         x2, y2 = i[0]
         dist += sqrt((p1.x - x2) ** 2 + (p1.y - y2) ** 2)
-        return distance(Vertice(x2,y2), p2, i[1:], dist)
+        return distance(Vertex(x2,y2), p2, i[1:], dist)
 
 def dijkstra(graph, start, end=None):
     """ Find shortest paths from the  start vertex to all vertices nearer
     than or equal to the end.
 
     The input graph "graph" is assumed to be Graph object. A vertex is a   
-    Vertice object. For any vertex v, graph.vertices[v].neighbours is itself 
+    Vertex object. For any vertex v, graph.vertices[v].neighbours is itself 
     a dictionary, indexed by the neighbors of v. For any edge v->w, 
     graph.vertices[v].neighbours[w] is the length of the edge.
 
@@ -239,19 +239,19 @@ def dijkstra(graph, start, end=None):
     Q = priorityDictionary()  # estimated distances of non-final vertices
     Q[start] = 0
 
-    for vertice in Q:
-        D[vertice] = Q[vertice]
-        if vertice == end:
+    for vertex in Q:
+        D[vertex] = Q[vertex]
+        if vertex == end:
             break
 
-        for neighbour in graph.vertices[vertice].neighbours:
-            length = D[vertice] + graph.vertices[vertice].neighbours[neighbour]
+        for neighbour in graph.vertices[vertex].neighbours:
+            length = D[vertex] + graph.vertices[vertex].neighbours[neighbour]
             if neighbour in D:
                 if length < D[neighbour]:
                     raise ValueError("Dijkstra: found better path to already-final vertex")
             elif neighbour not in Q or length < Q[neighbour]:
                 Q[neighbour] = length
-                P[neighbour] = vertice
+                P[neighbour] = vertex
 
     return (D, P, start)
 
@@ -277,14 +277,14 @@ def all_paths(dijkstra):
     """
     D, P, start = dijkstra
     paths = {}
-    for vertice in D:
-        p_index = vertice
+    for vertex in D:
+        p_index = vertex
         path = []
         while True:
-            path.append(vertice)
-            if vertice == start:
+            path.append(vertex)
+            if vertex == start:
                 break
-            vertice = P[vertice]
+            vertex = P[vertex]
         path.reverse()
         paths[p_index] = {'path': path, 'distance': D[p_index]}
     return paths
@@ -308,9 +308,9 @@ if __name__ == "__main__":
 
 #    calc_neighbours(graph.vertices, graph.edges)
     
-    for vertice in graph.vertices:
-        #print graph.get_connecting_edges(graph.vertices[vertice])
-        print("neighbours: ", graph.vertices[vertice].neighbours)
+    for vertex in graph.vertices:
+        #print graph.get_connecting_edges(graph.vertices[vertex])
+        print("neighbours: ", graph.vertices[vertex].neighbours)
 
     for edge in graph.edges:
         e = graph.edges[edge]
