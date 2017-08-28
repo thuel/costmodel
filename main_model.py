@@ -69,4 +69,28 @@ if __name__=="__main__":
 
     print(all_paths(dijkstra(graph, '011')))
 
+    newVertex = Vertex(0.4,0.85)
+    graph.add_vertex(newVertex)
+    print('p1: %s' % near_points(newVertex.id(), graph.vertices, 3))
+    print(near_edges(newVertex, graph.edges, 3))
+
+    for e_id, edge in graph.edges.items():
+        print(e_id, edge.angle())
+
+    graph.add_vertex(nearest_point_on_edges(newVertex))
+
+    newVertex = Vertex(3,4.9)
+    graph.add_vertex(newVertex)
+    graph.add_vertex(nearest_point_on_edges(newVertex))
+
+    newVertex = Vertex(8,4.9)
+    graph.add_vertex(newVertex)
+    graph.add_vertex(nearest_point_on_edges(newVertex))
+
+    newVertex = Vertex(3.2,7)
+    graph.add_vertex(newVertex)
+    np = nearest_point_on_edges(newVertex, 1.5)
+    if np is not None:
+        graph.add_vertex(np)
+
     print_graph(graph)
