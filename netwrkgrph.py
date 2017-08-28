@@ -46,6 +46,7 @@ class Edge(object):
         self.sort_coordinates()
         self.intermediates = intermediates
         self.graph = graph
+        self.parent = None
 
         length = self.length()
         if length < start.neighbours.get(end.id(),float('inf')):
@@ -223,7 +224,8 @@ def distance(v1, v2, i=None, dist=None):
 def angle(v1, v2):
     """ Return the angle of the line connecting to Vertex objects.
     """
-    return degrees(asin((v2.y - v1.y)/distance(v1, v2)))
+    return asin((v2.y - v1.y)/distance(v1, v2))
+    #return degrees(asin((v2.y - v1.y)/distance(v1, v2)))
 
 def near_points(vertex_id, vertices, radius):
     """ For a given id of a Vertex object "vertex_id" in a dictionary of Vertex
@@ -241,8 +243,8 @@ def near_points(vertex_id, vertices, radius):
     return near_points
 
 def near_edges(vertex, edges, radius):
-    """ Return a dictionary of the nearest edges for a given Vertex object and
-    a dictionary of Edge objects as well a the search radius.
+    """ Return a dictionary of the nearest edges for a given Vertex object,
+    a dictionary of Edge objects and the search radius.
     """
     near_edges = {}
     graph = vertex.graph
@@ -258,33 +260,73 @@ def near_edges(vertex, edges, radius):
                 near_edges[e_id] = graph.edges[e_id]
     return near_edges
 
-def nearest_point(vertex, radius=3):
-    """ Returns the nearest point to a Vertex object on an existing Edge object.
+def nearest_point_on_edges(vertex, radius=3):
+    """ Returns the nearest point to a Vertex object on an existing Edge object as Vertex.
     """
     graph = vertex.graph
     edges = graph.edges
-    relevant_edges = near_edges(vertex, edges, radius)
+    relevant_edges = near_edges(vertex, inter_edges(edges), radius)
     intersections = {} # dict with edge id as key and Vertex as value
-    for e_id, edge in relevant_edges:
-        a = distance(edge.start, vertex)
-        alpah = radians(angle(edge.start, vertex))
-        beta = radians(edge.angle())
-        gamma = alpha - beta
-        b = a * cos(gamma)
-        xi = cos(beta) * b + edge.start.x
-        yi = sin(beta) * b + edge.start.y
-        if xi < edge.start.x:
-            a = distance(edge.end, vertex)
-            alpah = angle(edge.end, vertex)
-            beta = edge.angle() * -1
-            gamma = alpha - beta
-            b = a * cos(gamma)
-            xi = cos(beta) * b + edge.start.x
-            yi = sin(beta) * b + edge.start.y
-        if xi > edge.start.x and xi < edge.end.x:
-            intersections[edge.id()] = Vertex(xi, yi)
+    distances = {} # dict with edge id as key and distance to vertex as value
+    for e_id, edge in relevant_edges.items():
+        coords = perpendicular_on_edge(vertex, edge)
+        if coords is not None:
+            new_vertex = Vertex(coords[0], coords[1])
+            intersections[edge.id()] = new_vertex
+            distances[edge.id()] = distance(vertex, new_vertex)
+    if len(distances) == 0:
+        edge_point = nearest_point_to_point(vertex, near_points(vertex.id(), graph.vertices, radius))
+        return edge_point # Todo: check if point is found, else do something sensible...
+    key = min(distances, key=distances.get)
+    return intersections[key]
+
+def nearest_point_to_point(vertex, vertices):
+    """ Returns the nearest vertex out of dictionary of vertices to a specific Vertex object.
+    """
+    distances = {}
+    for v_id, v in vertices.items():
+        distances[v_id] = distance(v, vertex)
+    key = min(distances, key=distances.get)
+    return vertices[key]
+
+def perpendicular_on_edge(vertex, edge):
+    """ Calculate the coordinates on an edge, which are perpendicular to the Vertex
+    object given to the function.
+    """
+    beta = edge.angle()
+    b = distance(edge.start, vertex) * cos(angle(edge.start, vertex) - beta)
+    xi = cos(beta) * b + edge.start.x
+    yi = sin(beta) * b + edge.start.y
+    if check_x_in_range(xi, edge):
+        return (xi, yi)
+
+def check_x_in_range(x_coord, edge):
+    """ Function to check if some x-coordinate is in the range of the edge specified.
+    """
+    return x_coord >= edge.start.x and x_coord <= edge.end.x
+
+def inter_edges(edges):
+    """ Return a dictionary of edges including the edges between intermediate points,
+    from a dictionary of edges.
+    """
+    new_edges = {}
+    print('edges: %s' % edges)
+    for e_id, edge in edges.items():
+        print('edge.intermediates: %s' % edge.intermediates)
+        if len(edge.intermediates) == 0:
+            new_edges[e_id] = edge
+        else:
+            parent_id = edge.id()
+            coord_list = [(edge.start.x, edge.start.y)] + edge.intermediates + [(edge.end.x, edge.end.y)]
+            for i in range(len(coord_list) - 1):
+                e = Edge(Vertex(coord_list[i][0], coord_list[i][1]),Vertex(coord_list[i+1][0], coord_list[i+1][1]))
+                e.parent_id = parent_id
+                new_edges[e.id()] = e
+        print('new edges: %s' % new_edges)
+        return new_edges
+    
+def min_distance():
     pass
-        
 
 def get_vertices_from_edges(edges):
     """ Returns a dictionary of unique vertices belonging to the edges given in form
@@ -419,10 +461,14 @@ if __name__ == "__main__":
 
     print(all_paths(dijkstra(graph, '011')))
 
-    newVertex = Vertex(0.5,1)
+    newVertex = Vertex(0.4,0.85)
     graph.add_vertex(newVertex)
     print(near_points(newVertex.id(), graph.vertices, 3))
     print(near_edges(newVertex, graph.edges, 3))
 
     for e_id, edge in graph.edges.items():
         print(e_id, edge.angle())
+
+    np = nearest_point_on_edges(newVertex)
+    graph.add_vertex(np)
+    print(np)
