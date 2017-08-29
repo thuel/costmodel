@@ -32,7 +32,7 @@ if __name__=="__main__":
     graph=Graph()
     graph.add_edge(2,5,1,1, sinus_line_points(1,1,2,0.2))
     graph.add_edge(2,5,7,5)
-    graph.add_edge(2,5,3,6)
+    graph.add_edge(2,5,3,6,[(2.3,5.5)])
     graph.add_edge(3,3,1,1, sinus_line_points(1,1,3,0.1)) 
     graph.add_edge(3,6,7,5)
     graph.add_edge(0,0,1,1,[(0.2,0.375),(0.375,0.625),(0.7,0.875)])
@@ -42,8 +42,6 @@ if __name__=="__main__":
     graph.add_edge(3,3,4,2)
     graph.add_edge(7,5,6,1)
     graph.add_edge(7,5,10,8)
-
-    calc_neighbours(graph.vertices, graph.edges)
     
     for vertex in graph.vertices:
         #print graph.get_connecting_edges(graph.vertices[vertex])
@@ -71,7 +69,6 @@ if __name__=="__main__":
 
     newVertex = Vertex(0.4,0.85)
     graph.add_vertex(newVertex)
-    print('p1: %s' % near_points(newVertex.id(), graph.vertices, 3))
     print(near_edges(newVertex, graph.edges, 3))
 
     for e_id, edge in graph.edges.items():
@@ -87,10 +84,23 @@ if __name__=="__main__":
     graph.add_vertex(newVertex)
     graph.add_vertex(nearest_point_on_edges(newVertex))
 
+    newVertex = Vertex(1.8,5.8)
+    graph.add_vertex(newVertex)
+    graph.add_vertex(nearest_point_on_edges(newVertex))
+
     newVertex = Vertex(3.2,7)
     graph.add_vertex(newVertex)
     np = nearest_point_on_edges(newVertex, 1.5)
     if np is not None:
         graph.add_vertex(np)
+    print(np)
+    
+    ne = None
+    if np.edges.values()[0].parent != None:
+        ne = graph.edges[np.edges.values()[0].parent]
+    else:
+        ne = graph.edges[np.edges.keys()[0]]
+    split_edge_at_point(ne, np)
+    
 
     print_graph(graph)
