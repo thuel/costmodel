@@ -6,7 +6,7 @@
 #import essential modules, libraries and methods/functions
 from __future__ import (absolute_import, division, print_function, unicode_literals)
 from builtins import *
-from math import sqrt, sin, cos, asin, acos, degrees, radians
+from math import sqrt, sin, cos, asin, atan2, acos, degrees, radians
 from priodict import priorityDictionary
 
 
@@ -229,7 +229,7 @@ def angle(v1, v2):
     """ Return the angle of the line connecting to Vertex objects.
     """
     if distance(v1, v2) != 0:
-        return asin((v2.y - v1.y)/distance(v1, v2))
+        return atan2(v2.y - v1.y, v2.x - v1.x)
     else:
         return 0
     """ Ensure that there is a distance between the two Vertex objects, otherwise
@@ -246,7 +246,6 @@ def near_points(vertex, vertices, radius):
     for key, value in vertices.items():
         """ key: vertex id, value: Vertex object
         """
-        print('edges dict in near_points for %s: %s' % (key, value.edges))
         dist = distance(vertex, value)
         if dist < radius and dist > 0:
             near_points[key] = value
@@ -256,12 +255,8 @@ def near_edges(vertex, edges, radius):
     """ Return a dictionary of the nearest edges for a given Vertex object,
     a dictionary of Edge objects and the search radius.
     """
-    print('edges in near_edges for %s: %s' % (vertex, edges))
     near_edges = {}
     vertices = get_vertices_from_edges(edges)
-    for key, value in vertices.items():
-        print('after get_vertices_from_edges: %s\t%s' % (key,value.edges))
-    print('vertices for near_edges: %s' % vertices)
     """ The dictionary with the Vertex objects to be used next has to be
     initiated from the edges given to the function.
     """
@@ -271,36 +266,32 @@ def near_edges(vertex, edges, radius):
     near_points() won't be able to return a valid value.
     """
     nearest_vertices = near_points(vertex, vertices, radius)
-    print('nearest vertices in near_edges: %s' % nearest_vertices)
     """ Get the relevant vertices from all the vertices. Eventually the following
     calculations are faster.
     """
     for v_id, v_object in nearest_vertices.items():
         """ v_id: vertex id, v_object: Vertex object
         """
-        print('edges of nearest vertices for %s: %s' % (v_object, v_object.edges))
         for e_id, edge in v_object.edges.items():
             """ e_id: edge id, edge: Edge object
             """
-            if e_id not in near_edges:
+            if e_id not in near_edges and e_id in edges:
                 near_edges[e_id] = edge
     """ Iterate over the relevant vertices and get their connecting edges. If those
-    edges are not an item of near_edges yet, add them to the dictionary.
+    edges are not an item of near_edges yet and part of the original edges dict given
+    to the function, add them to the dictionary.
     """
     return near_edges
 
 def nearest_point_on_edges(vertex, radius=3, edges=None):
     """ Returns the nearest point to a Vertex object on an existing Edge object as Vertex.
     """
-    print('running for: %s with vertex.edges: %s' % (vertex, vertex.edges))
     graph = vertex.graph
     if edges is None:
         edges = graph.edges
     else:
         edges = edges
-    print('edges for %s: %s' % (vertex, edges))
     relevant_edges = near_edges(vertex, inter_edges(edges), radius)
-    print('relevant edges for %s: %s' %(vertex, relevant_edges))
     """ From the edges in the graph, get a new dictionary of edges within the relevant
     distance and divide edges with intermediates into new Edge objects, referencing their
     parent Edge object.
@@ -315,37 +306,26 @@ def nearest_point_on_edges(vertex, radius=3, edges=None):
         if coords is not None:
             new_vertex = Vertex(coords[0], coords[1])
             new_vertex.edges[e_id] = edge
-            intersections[edge.id()] = new_vertex
-            distances[edge.id()] = distance(vertex, new_vertex)
+            intersections[e_id] = new_vertex
+            distances[e_id] = distance(vertex, new_vertex)
         else:
-            if edge.parent!= None:
-                dist_s = distance(vertex, edge.start)
-                dist_e = distance(vertex, edge.end)
-                if dist_s <= dist_e:
-                    intersections[edge.parent] = edge.start
-                else:
-                    intersections[edge.parent] = edge.end
-                distances[edge.parent] = min([dist_s, dist_e])
+            dist_s = distance(vertex, edge.start)
+            dist_e = distance(vertex, edge.end)
+            if dist_s <= dist_e:
+                intersections[e_id] = edge.start
             else:
-                dist_s = distance(vertex, edge.start)
-                dist_e = distance(vertex, edge.end)
-                if dist_s <= dist_e:
-                    intersections[edge.id()] = edge.start
-                else:
-                    intersections[edge.id()] = edge.end
-                distances[edge.id()]= min([dist_s, dist_e])
+                intersections[e_id] = edge.end
+            distances[e_id] = min([dist_s, dist_e])
         """ If there is a perpendicular point on the edge, create a new Vertex object with the
         coordinates of this point. Add this object to the intersecting vertex dictionary. Add the
         distance from the Vertex "vertex" to the new Vertex object to the dictionary distances.
         Else, return the nearest existing start or end point of an edge within the search radius.
         """
-    print('distances for %s: %s' %(vertex, distances))
     if len(distances) == 0:
         return None
         """ If no Edge object is within the search radius return None.
         """
     key = min(distances, key=distances.get)
-    print('key for minimal distance for %s: %s' % (vertex, key))
     return intersections[key]
     """ Get the key of the new Vertex object with the minimal distance to the Vertex object
     "vertex" and return this object from the dictionary of new Vertex objects.
@@ -381,7 +361,6 @@ def inter_edges(edges):
     """ Return a dictionary of edges including the edges between intermediate points,
     from a dictionary of edges.
     """
-    print('edges in inter_edges: %s' % edges)
     new_edges = {}
     for e_id, edge in edges.items():
         ints = edge.intermediates
@@ -389,14 +368,6 @@ def inter_edges(edges):
         parent = edge.id()
         if len(ints) == 0:
             new_edges[e_id] = edge
-            """elif len(ints) == 1:
-            v_new = Vertex(ints[0][0], ints[0][1])
-            e_1 = Edge(start, edge.graph.vertices.get(v_new.id(), v_new))
-            e_1.parent = parent
-            e_2 = Edge(edge.graph.vertices.get(v_new.id(), v_new), end)
-            e_2.parent = parent
-            new_edges[e_1.id()] = e_1
-            new_edges[e_2.id()] = e_2"""
         else:
             ve = edge.graph.vertices # existing vertices
             coord_list = [(edge.start.x, edge.start.y)] + ints + [(edge.end.x, edge.end.y)]
@@ -406,7 +377,6 @@ def inter_edges(edges):
                 e = Edge(ve.get(v1.id(), v1), ve.get(v2.id(), v2))
                 e.parent = parent
                 new_edges[e.id()] = e
-    print('inter_edges out: %s' % new_edges)
     return new_edges
 
 def split_edge_at_point(edge, vertex):
@@ -414,22 +384,12 @@ def split_edge_at_point(edge, vertex):
     and ending at the Vertex object. The second one starting at the Vertex object and ending at
     old edge's end Vertex.
     """
-    print('before splitting:...')
-    print('%d edges' % len(edge.graph.edges))
-    for e_id, e in edge.graph.edges.items():
-        print('%s\t\tintermediates: %s' % (e_id, e.intermediates))
-    print()
     graph = edge.graph
     if vertex.id() not in get_vertices_from_edges({edge.id(): edge}):
         intermediates = split_intermediates(edge, vertex)
         graph.add_edge(edge.start.x, edge.start.y, vertex.x, vertex.y, intermediates[0])
         graph.add_edge(vertex.x, vertex.y, edge.end.x, edge.end.y, intermediates[1])
-        graph.delete_edge(edge)
-    print('after splitting:...')
-    print('%d edges' % len(edge.graph.edges))
-    for e_id, e in edge.graph.edges.items():
-        print('%s\t\tintermediates: %s' % (e_id, e.intermediates))
-    
+        graph.delete_edge(edge)    
 
 def split_intermediates(edge, vertex):
     """ Return the list of intermediate points of an Edge object divided at Vertex object "vertex"
@@ -598,5 +558,3 @@ if __name__ == "__main__":
     else:
         ne = graph.edges[np.edges.keys()[0]]
     split_edge_at_point(ne, np)
-        
-        
