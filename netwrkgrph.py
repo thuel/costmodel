@@ -40,11 +40,15 @@ class Edge(object):
     """Edge to be used in a network graph. Attributes: start, end as Vertex objects, 
     intermediate points as a list of coordinate tuples and the assigned graph object.
     """
-    def __init__(self, start=Vertex(0.0,0.0), end=Vertex(1.0,1.0), intermediates=list(), graph=None):
+    def __init__(self, start=Vertex(0.0,0.0), end=Vertex(1.0,1.0), intermediates=None, graph=None):
         self.start = start
         self.end = end
         self.sort_coordinates()
+        if intermediates is None:
+            intermediates = list()
         self.intermediates = intermediates
+        if graph is None:
+            graph = None
         self.graph = graph
         self.parent = None
 
@@ -90,17 +94,23 @@ class Edge(object):
 class Graph(object):
     """Graph to be populated by Vertex and Edge objects.
     """
-    def __init__(self, vertices={}, edges={}):
+    def __init__(self, vertices=None, edges=None):
+        if vertices is None:
+            vertices = dict()
+        if edges is None:
+            edges = dict()
         self.vertices = vertices
         self.edges = edges
 
     def __str__(self):
         return "Graph with vertices %s and edges %s." % (self.vertices, self.edges)
 
-    def add_edge(self, x1, y1, x2, y2, intermediates=list()):
+    def add_edge(self, x1, y1, x2, y2, intermediates=None):
         """Add an edge to the graph. Needs x/y coordinates of start and end vertex.
         Optional: a list of intermediate coordinate tuples.
         """
+        if intermediates is None:
+            intermediates = list()
         start = self.vertices.get(str(0) + str(x1) + str(y1), Vertex(x1,y1,self))
         self.add_vertex(start)
         """Add the starting vertex to the graph
@@ -390,9 +400,6 @@ def split_edge_at_point(edge, vertex):
     old edge's end Vertex.
     """
     graph = edge.graph
-    print()
-    print(vertex.id() not in get_vertices_from_edges({edge.id(): edge}))
-    print()
     if vertex.id() not in get_vertices_from_edges({edge.id(): edge}):
         intermediates = split_intermediates(edge, vertex)
         start = edge.start
@@ -518,28 +525,24 @@ def all_paths(dijkstra):
     
 if __name__ == "__main__":
     graph=Graph()
-    graph.add_edge(2,5,1,1, [(1.302,4)])
+    graph.add_edge(2,5,1,1, [(1.3,4)])
     graph.add_edge(2,5,7,5)
     graph.add_edge(2,5,3,6)
     graph.add_edge(3,3,1,1)
     graph.add_edge(3,6,7,5)
-    graph.add_edge(0,0,1,1,[(0.25,0.3),(0.5,0.8),(0.75,0.8)])
+    graph.add_edge(0,0,1,1,[(0.25,0.3),(0.5,0.8),(0.75,0.8)])    
     graph.add_edge(0,0,1,1,[(0.25,0.2),(0.5,0.2),(0.75,0.2)])
-    graph.add_edge(0,2,1,1)
+    graph.add_edge(0,2,1,1)    
     graph.add_edge(1,1,6,1)
     graph.add_edge(3,3,4,2)
     graph.add_edge(7,5,6,1)
     graph.add_edge(7,5,10,8)
 
-    for edge in graph.edges:
-        e = graph.edges[edge]
-        print(e, e.length())
-
-    print(graph.min_corner_xy())
-    print(graph.max_corner_xy())
+    for e_id, edge in graph.edges.items():
+        print(e_id, '\t', edge.length())
 
     print("dimensions: ", graph.dimensions())
-    print([edge.id() for edge in graph.edges.values()])
+    #print([edge.id() for edge in graph.edges.values()])
 
     d2 = dijkstra(graph, '011')
     d1 = dijkstra(graph, '011', '011')
@@ -557,11 +560,8 @@ if __name__ == "__main__":
 
     newVertex = Vertex(0.39,0.8472)
     graph.add_vertex(newVertex)
-    print(near_points(newVertex, graph.vertices, 3))
-    print(near_edges(newVertex, inter_edges(graph.edges), 3))
-
-    for e_id, edge in graph.edges.items():
-        print(e_id, edge.angle())
+    #print(near_points(newVertex, graph.vertices, 3))
+    #print(near_edges(newVertex, inter_edges(graph.edges), 3))
 
     np = nearest_point_on_edges(newVertex)
     graph.add_vertex(np)
@@ -569,12 +569,67 @@ if __name__ == "__main__":
     ne = None
     if np.edges.values()[0].parent != None:
         ne = graph.edges[np.edges.values()[0].parent]
-        print(ne.id())
+        print('nearest edge: ', ne.id())
     else:
         ne = graph.edges[np.edges.keys()[0]]
     split_edge_at_point(ne, np)
 
     print('All paths from dijkstra calculation')
     print(all_paths(dijkstra(graph, '011')))
-    print() 
+    print()
+
+    """ Test run with second graph """
+    graph2=Graph()
+    graph2.add_edge(2,5,1,1, [(1.301,4)])
+    graph2.add_edge(2,5,7,5)
+    graph2.add_edge(2,5,3,6)
+    graph2.add_edge(3,3,1,1)
+    graph2.add_edge(3,6,7,5)
+    graph2.add_edge(0,0,1,1,[(0.25,0.3),(0.5,0.8),(0.75,0.8)])    
+    graph2.add_edge(0,0,1,1,[(0.25,0.2),(0.5,0.2),(0.75,0.2)])
+    graph2.add_edge(0,2,1,1)    
+    graph2.add_edge(1,1,6,1)
+    graph2.add_edge(3,3,4,2)
+    graph2.add_edge(7,5,6,1)
+    graph2.add_edge(7,5,10,8)
+
+    for e_id, edge in graph2.edges.items():
+        print(e_id, '\t', edge.length())
+
+    print("dimensions: ", graph2.dimensions())
+    #print([edge.id() for edge in graph2.edges.values()])
+
+    d2 = dijkstra(graph2, '011')
+    d1 = dijkstra(graph2, '011', '011')
+
+    print('distances d2: %s' % d2[0])
+    print()
+
+    result = shortest_path(graph2,'0108', '011')
+    print(result)
+    print()
+
+    print('All paths from dijkstra calculation')
+    print(all_paths(dijkstra(graph2, '011')))
+    print()
+
+    newVertex2 = Vertex(0.39,0.8472)
+    graph2.add_vertex(newVertex2)
+    #print(near_points(newVertex, graph2.vertices, 3))
+    #print(near_edges(newVertex, inter_edges(graph2.edges), 3))
+
+    np = nearest_point_on_edges(newVertex2, 3, graph2.edges)
+    graph2.add_vertex(np)
+    print(np, np.edges, np.edges.values()[0].parent)
+    ne = None
+    if np.edges.values()[0].parent != None:
+        ne = graph2.edges[np.edges.values()[0].parent]
+        print('nearest edge: ', ne.id())
+    else:
+        ne = graph2.edges[np.edges.keys()[0]]
+    split_edge_at_point(ne, np)
+
+    print('All paths from dijkstra calculation')
+    print(all_paths(dijkstra(graph2, '011')))
+    print()
         
