@@ -10,13 +10,14 @@ from pltgrph import *
 from netwrkgrph import *
 from math import radians, sin
 
-def sinus_line_points(startx, starty, endx, step=0.25):
+def sinus_line_points(startx, starty, endx, endy, step=0.25):
     """sinus line points calculation:
     """
     xgses = [ i*step for i in range(int((endx - startx)/step) + 1) ]
-    yies = []
-    for x in xgses:
-        yies.append(x - sin(radians(x*360))*(step/sin(radians(step*360))))
+    mult = (endy-starty)/(endx-startx)
+    yies = [ i*step*mult for i in range(int((endx - startx)/step) + 1)]
+    sinuses = [ sin(radians(i/len(yies) * 360)) for i in range(len(yies))]
+    yies = [ y + sinuses[yies.index(y)] * (step/sin(radians(step*360))) for y in yies]
     return lists_to_tuples([x + startx for x in xgses ], [y + starty for y in yies])
 
 def lists_to_tuples(list1, list2):
@@ -30,10 +31,10 @@ def lists_to_tuples(list1, list2):
 
 if __name__=="__main__":
     graph=Graph()
-    graph.add_edge(2,5,1,1, sinus_line_points(1,1,2,0.2))
+    graph.add_edge(2,5,1,1, sinus_line_points(1,1,2,5,0.1))
     graph.add_edge(2,5,7,5)
     graph.add_edge(2,5,3,6,[(2.3,5.5)])
-    graph.add_edge(3,3,1,1, sinus_line_points(1,1,3,0.1)) 
+    graph.add_edge(3,3,1,1, sinus_line_points(1,1,3,3,0.1)) 
     graph.add_edge(3,6,7,5)
     graph.add_edge(0,0,1,1,[(0.2,0.375),(0.375,0.625),(0.7,0.875)])
     graph.add_edge(0,0,1,1,[(0.2,0.025),(0.6,0.45),(0.8,0.6)])
@@ -84,7 +85,7 @@ if __name__=="__main__":
     graph.add_vertex(newVertex)
     graph.add_vertex(nearest_point_on_edges(newVertex))
 
-    newVertex = Vertex(1.8,5.8)
+    newVertex = Vertex(1.8,6.2)
     graph.add_vertex(newVertex)
     graph.add_vertex(nearest_point_on_edges(newVertex))
 
