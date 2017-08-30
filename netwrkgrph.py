@@ -32,9 +32,9 @@ class Vertex(object):
     def id(self):
         return str(0) + str(self.x) + str(self.y)
 
-    def get_neighbours(self):
+    def update_neighbours(self):
         assert self.graph is not None, 'Can not get neighbours: vertex not part of graph!'
-        calc_neighbours({self.id(): self}, self.graph.edges)
+        update_neighbours({self.id(): self})
 
 class Edge(object):
     """Edge to be used in a network graph. Attributes: start, end as Vertex objects, 
@@ -49,11 +49,11 @@ class Edge(object):
         self.parent = None
 
         length = self.length()
-        if length < start.neighbours.get(end.id(),float('inf')):
+        if length < start.neighbours.get(end.id(),float('inf')) and self.graph == start.graph:
             start.neighbours[end.id()] = length
         if self.id() not in start.edges:
             start.edges[self.id()] = self
-        if length < end.neighbours.get(start.id(),float('inf')):
+        if length < end.neighbours.get(start.id(),float('inf')) and self.graph == end.graph:
             end.neighbours[start.id()] = length
         if self.id() not in end.edges:
             end.edges[self.id()] = self
@@ -65,6 +65,8 @@ class Edge(object):
     def __delete__(self):
         del self.start.edges[self.id()]
         del self.end.edges[self.id()]
+        del self.start.neighbours[self.end.id()]
+        del self.end.neighbours[self.start.id()]
         
     def length(self):
         return distance(self.start, self.end, self.intermediates)
@@ -99,20 +101,19 @@ class Graph(object):
         """Add an edge to the graph. Needs x/y coordinates of start and end vertex.
         Optional: a list of intermediate coordinate tuples.
         """
-        start = self.vertices.get(str(0) + str(x1) + str(y1), Vertex(x1,y1))
+        start = self.vertices.get(str(0) + str(x1) + str(y1), Vertex(x1,y1,self))
         self.add_vertex(start)
         """Add the starting vertex to the graph
         """
-        end = self.vertices.get(str(0) + str(x2) + str(y2), Vertex(x2,y2))
+        end = self.vertices.get(str(0) + str(x2) + str(y2), Vertex(x2,y2,self))
         self.add_vertex(end)
         """Add the ending vertex to the graph
         """
-        new_edge = Edge(start, end, intermediates)
+        new_edge = Edge(start, end, intermediates, self)
         if self.check_edge(new_edge):
             print("%s already exists. Doing noting" % new_edge)
         else:
             self.edges[new_edge.id()] = new_edge
-            new_edge.graph = self
         """Add edge to graph if it doesn't exist.
         """
 
@@ -129,7 +130,9 @@ class Graph(object):
         object and the start and end Vertex objects.
         """
         del edge.start.edges[edge.id()]
+        del edge.start.neighbours[edge.end.id()]
         del edge.end.edges[edge.id()]
+        del edge.end.neighbours[edge.start.id()]
         del self.edges[edge.id()]
 
     def add_vertex(self, vertex):
@@ -183,25 +186,27 @@ class Graph(object):
 of those classes are declared hereafter:
 """
 
-def get_neighbours(vertex, edges):
+def get_neighbours(vertex):
     """Get a dictionary of vertex objects of the neighbouring vertices for a given
        vertex object and the edges of the graph.
     """
     n = {}
-    edges = get_connecting_edges(vertex, edges)
+    edges = vertex.edges
+    graph_vertices = vertex.graph.vertices
     for e_id, edge in edges.items():
-        if edge.start is vertex:
-            n[edge.end.id()] = edge.length()
-        elif edge.end is vertex:
-            n[edge.start.id()] = edge.length()
+        start, end, length = edge.start, edge.end, edge.length()
+        if start is vertex and length < n.get(start.id(), float('inf')) and end.id() in graph_vertices:
+            n[end.id()] = length
+        elif end is vertex and length < n.get(end.id(), float('inf')) and start.id() in graph_vertices:
+            n[start.id()] = length
     return n
 
-def calc_neighbours(vertices, edges):
+def update_neighbours(vertices):
     """For a dictionary of vertex objctes and a directory of edge objects, calculate
        the neighbouring vertices of every vertex object.
     """
     for vertex in vertices:
-        vertices[vertex].neighbours = get_neighbours(vertices[vertex], edges)
+        vertices[vertex].neighbours = get_neighbours(vertices[vertex])
 
 def distance(v1, v2, i=None, dist=None):
     """ Calculate the distance between two Vertex objects v1 and v2 and optionally a list
@@ -385,11 +390,20 @@ def split_edge_at_point(edge, vertex):
     old edge's end Vertex.
     """
     graph = edge.graph
+    print()
+    print(vertex.id() not in get_vertices_from_edges({edge.id(): edge}))
+    print()
     if vertex.id() not in get_vertices_from_edges({edge.id(): edge}):
         intermediates = split_intermediates(edge, vertex)
-        graph.add_edge(edge.start.x, edge.start.y, vertex.x, vertex.y, intermediates[0])
-        graph.add_edge(vertex.x, vertex.y, edge.end.x, edge.end.y, intermediates[1])
-        graph.delete_edge(edge)    
+        start = edge.start
+        end = edge.end
+        graph.delete_edge(edge)
+        graph.add_edge(start.x, start.y, vertex.x, vertex.y, intermediates[0])
+        graph.add_edge(vertex.x, vertex.y, end.x, end.y, intermediates[1])
+        start.update_neighbours()
+        vertex.update_neighbours()
+        end.update_neighbours()
+            
 
 def split_intermediates(edge, vertex):
     """ Return the list of intermediate points of an Edge object divided at Vertex object "vertex"
@@ -451,7 +465,10 @@ def dijkstra(graph, start, end=None):
         D[vertex] = Q[vertex]
         if vertex == end:
             break
-
+        print()
+        print('vertex: ', vertex)
+        print('neighbours of %s: %s' % (graph.vertices[vertex], graph.vertices[vertex].neighbours))
+        print()
         for neighbour in graph.vertices[vertex].neighbours:
             length = D[vertex] + graph.vertices[vertex].neighbours[neighbour]
             if neighbour in D:
@@ -501,7 +518,7 @@ def all_paths(dijkstra):
     
 if __name__ == "__main__":
     graph=Graph()
-    graph.add_edge(2,5,1,1)
+    graph.add_edge(2,5,1,1, [(1.302,4)])
     graph.add_edge(2,5,7,5)
     graph.add_edge(2,5,3,6)
     graph.add_edge(3,3,1,1)
@@ -513,12 +530,6 @@ if __name__ == "__main__":
     graph.add_edge(3,3,4,2)
     graph.add_edge(7,5,6,1)
     graph.add_edge(7,5,10,8)
-
-#    calc_neighbours(graph.vertices, graph.edges)
-    
-    for vertex in graph.vertices:
-        #print graph.get_connecting_edges(graph.vertices[vertex])
-        print("neighbours: ", graph.vertices[vertex].neighbours)
 
     for edge in graph.edges:
         e = graph.edges[edge]
