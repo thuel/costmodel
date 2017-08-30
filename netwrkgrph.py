@@ -532,13 +532,17 @@ if __name__ == "__main__":
 
     d2 = dijkstra(graph, '011')
     d1 = dijkstra(graph, '011', '011')
-    
+
     print('distances d2: %s' % d2[0])
+    print()
 
     result = shortest_path(graph,'0108', '011')
     print(result)
+    print()
 
+    print('All paths from dijkstra calculation')
     print(all_paths(dijkstra(graph, '011')))
+    print()
 
     newVertex = Vertex(0.39,0.8472)
     graph.add_vertex(newVertex)
@@ -558,3 +562,8 @@ if __name__ == "__main__":
     else:
         ne = graph.edges[np.edges.keys()[0]]
     split_edge_at_point(ne, np)
+
+    print('All paths from dijkstra calculation')
+    print(all_paths(dijkstra(graph, '011')))
+    print() 
+        
