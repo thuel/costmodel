@@ -54,7 +54,7 @@ class Edge(object):
         if graph is None:
             graph = None
         self.graph = graph
-        self.sub_edges = self.sub_edges()
+        self.sub_edges = self.get_sub_edges()
 
         length = self.length()
         if length < start.neighbours.get(end.id(),float('inf')) and self.graph == start.graph:
@@ -97,7 +97,7 @@ class Edge(object):
     def angle(self):
         return angle(self.start, self.end)
 
-    def sub_edges(self):
+    def get_sub_edges(self):
         edges = []
         vertices = [self.start] + self.intermediates + [self.end]
         for i in range(len(vertices) - 1):
@@ -371,10 +371,13 @@ def nearest_point_on_edges(vertex, radius=3, edges=None):
         """ For every edge get the point on the edge which is perpendicular to the Vertex object
         the nearest point is searched for.
         """
-        print('coords for edge: %s\t%s' % (e_id, coords))
         if coords is not None:
             new_vertex = Vertex(coords[0], coords[1],'vertex')
-            new_vertex.sub_edges[e_id] = edge
+            new_vertex = graph.vertices.get(new_vertex.id(), new_vertex)
+            """ If the nearest point corresponds to an existing Vertex object in in the
+            vertices dictionary of the Graph object, point the new_vertex variable to
+            this object.
+            """
             intersections[e_id] = new_vertex
             distances[e_id] = distance(vertex, new_vertex)
         else:
@@ -397,7 +400,8 @@ def nearest_point_on_edges(vertex, radius=3, edges=None):
     key = min(distances, key=distances.get)
     near_vertex = intersections[key]
     near_vertex.sub_edges[key] = relevant_edges[key]
-    print('near_vertex: ', near_vertex.edges)
+    near_vertex.kind = 'vertex'
+    near_vertex.nearest_edge = relevant_edges[key].parent
     graph.add_vertex(near_vertex)
     return near_vertex
     """ Get the key of the new Vertex object with the minimal distance to the Vertex object
@@ -422,55 +426,13 @@ def perpendicular_on_edge(vertex, edge):
     b = distance(edge.start, vertex) * cos(angle(edge.start, vertex) - beta)
     xi = cos(beta) * b + edge.start.x
     yi = sin(beta) * b + edge.start.y
-    if check_x_in_range(xi, edge):
+    if is_in_range(xi, edge.start.x, edge.end.x) and is_in_range(yi, edge.start.y, edge.end.y):
         return (xi, yi)
 
-def check_x_in_range(x_coord, edge):
-    """ Function to check if some x-coordinate is in the range of the edge specified.
+def is_in_range(coord, start, end):
+    """ Function to check if some coordinate is in the range specified.
     """
-    return x_coord >= edge.start.x and x_coord <= edge.end.x
-
-def inter_edges(edges):
-    """ Return a dictionary of edges representing the sub-edges of edges with intermediate
-    points or the edges themself if they have no intermediate points.
-    Input: a dictionary of edges.
-    """
-    new_edges = {}
-    for e_id, edge in edges.items():
-        ints = edge.intermediates
-        start, end = edge.start, edge.end
-        parent = edge.id()
-        if len(ints) == 0:
-            new_edges[e_id] = edge
-        else:
-            ve = edge.graph.vertices # existing vertices
-            coord_list = [(edge.start.x, edge.start.y)] + ints + [(edge.end.x, edge.end.y)]
-            for i in range(len(coord_list) - 1):
-                v1 = Vertex(coord_list[i][0], coord_list[i][1])
-                v2 = Vertex(coord_list[i+1][0], coord_list[i+1][1])
-                e = Edge(ve.get(v1.id(), v1), ve.get(v2.id(), v2))
-                e.parent = parent
-                new_edges[e.id()] = e
-                try:
-                    del e.start.edges[e.id()]
-                except:
-                    pass
-                try:
-                    del e.start.neighbours[e.id()]
-                except:
-                    pass
-                try:
-                    del e.end.edges[e.id()]
-                except:
-                    pass
-                try:
-                    del e.end.neighbours[e.id()]
-                except:
-                    pass
-    print('*** New Edges ***')
-    for e in new_edges:
-        print(e)
-    return new_edges
+    return coord >= start and coord <= end
 
 def split_edge_at_point(edge, vertex):
     """ Replace an edge object with two new ones. The first starting at the old start Vertex object
@@ -478,18 +440,17 @@ def split_edge_at_point(edge, vertex):
     old edge's end Vertex.
     """
     graph = edge.graph
-    if vertex.id() not in get_vertices_from_edges({edge.id(): edge}, graph):
+    if vertex.id() in edge.vertices or vertex in edge.intermediates:
         intermediates = split_intermediates(edge, vertex)
         start = edge.start
         end = edge.end
         graph.delete_edge(edge)
-        graph.add_edge(start.x, start.y, vertex.x, vertex.y, intermediates[0])
-        graph.add_edge(vertex.x, vertex.y, end.x, end.y, intermediates[1])
+        graph.add_edge(start.x, start.y, vertex.x, vertex.y, [(i.x,i.y) for i in intermediates[0]])
+        graph.add_edge(vertex.x, vertex.y, end.x, end.y, [(i.x,i.y) for i in intermediates[1]])
         start.update_neighbours()
         vertex.update_neighbours()
         end.update_neighbours()
             
-
 def split_intermediates(edge, vertex):
     """ Return the list of intermediate points of an Edge object divided at Vertex object "vertex"
     as a tuple.
@@ -634,7 +595,7 @@ if __name__ == "__main__":
     print('All paths from dijkstra calculation')
     print(all_paths(dijkstra(graph, '011')))
     print()
-
+    
     for edge in graph.edges.values():
         for sub_edge in edge.sub_edges:
             print(sub_edge.id(), "\t", sub_edge.vertices)
@@ -645,12 +606,15 @@ if __name__ == "__main__":
     graph.add_vertex(newVertex)
     #print(near_points(newVertex, graph.vertices, 3))
     #print(near_edges(newVertex, inter_edges(graph.edges), 3))
-    """
+ 
     np = nearest_point_on_edges(newVertex, 3, graph.edges)
     graph.add_vertex(np)
-    ne = np.sub_edges.values()[0]
+    print('near_point:', np.x, np.y)
+    print()
+    
+    ne = graph.edges[np.nearest_edge]
     split_edge_at_point(ne, np)
-    """
+
     print('All paths from dijkstra calculation')
     print(all_paths(dijkstra(graph, '011')))
     print()
@@ -671,22 +635,9 @@ if __name__ == "__main__":
     graph2.add_edge(7,5,10,8)
 
     e2_bs = copy.deepcopy(graph2.edges)
-    
-    for e_id, edge in graph2.edges.items():
-        print(e_id, '\t', edge.length())
-
-    print("dimensions: ", graph2.dimensions())
-    #print([edge.id() for edge in graph2.edges.values()])
 
     d2 = dijkstra(graph2, '011')
     d1 = dijkstra(graph2, '011', '011')
-
-    print('distances d2: %s' % d2[0])
-    print()
-
-    result = shortest_path(graph2,'0108', '011')
-    print(result)
-    print()
 
     print('All paths from dijkstra calculation')
     print(all_paths(dijkstra(graph2, '011')))
@@ -699,13 +650,10 @@ if __name__ == "__main__":
 
     np = nearest_point_on_edges(newVertex2, 3, graph2.edges)
     graph2.add_vertex(np)
-    print(np, np.edges, np.edges.values()[0].parent)
-    ne = None
-    if np.edges.values()[0].parent != None:
-        ne = graph2.edges[np.edges.values()[0].parent]
-        print('nearest edge: ', ne.id())
-    else:
-        ne = graph2.edges[np.edges.keys()[0]]
+    print('near_point:', np.x, np.y)
+    print()
+
+    ne = graph2.edges[np.sub_edges.values()[0].parent]
     split_edge_at_point(ne, np)
 
     print('All paths from dijkstra calculation')
