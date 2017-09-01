@@ -466,6 +466,16 @@ def split_intermediates(edge, vertex):
         return (edge.intermediates[:limit], edge.intermediates[limit:])
     else:
         return ([],[])
+
+def connect_vertex_to_graph(vertex, graph):
+    if vertex.id() not in graph.vertices:
+        graph.add_vertex(vertex)
+    v = nearest_point_on_edges(vertex, 10, graph.edges)
+    graph.add_vertex(v)
+    edge = graph.edges[v.nearest_edge]
+    split_edge_at_point(edge, v)
+    graph.add_edge(vertex.x, vertex.y, v.x, v.y)
+    
     
 def min_distance():
     pass
@@ -603,17 +613,8 @@ if __name__ == "__main__":
         print(v_id)
 
     newVertex = Vertex(0.39,0.8472)
-    graph.add_vertex(newVertex)
-    #print(near_points(newVertex, graph.vertices, 3))
-    #print(near_edges(newVertex, inter_edges(graph.edges), 3))
- 
-    np = nearest_point_on_edges(newVertex, 3, graph.edges)
-    graph.add_vertex(np)
-    print('near_point:', np.x, np.y)
-    print()
-    
-    ne = graph.edges[np.nearest_edge]
-    split_edge_at_point(ne, np)
+
+    connect_vertex_to_graph(newVertex, graph)
 
     print('All paths from dijkstra calculation')
     print(all_paths(dijkstra(graph, '011')))
