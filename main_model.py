@@ -30,7 +30,7 @@ def lists_to_tuples(list1, list2):
         return result
 
 if __name__=="__main__":
-    graph=Graph()
+    graph=Graph('graph1')
     graph.add_edge(2,5,1,1, sinus_line_points(1,1,2,5,0.1))
     graph.add_edge(2,5,7,5)
     graph.add_edge(2,5,3,6,[(2.3,5.5)])
@@ -68,7 +68,7 @@ if __name__=="__main__":
 
     print(all_paths(dijkstra(graph, '011')))
 
-    newVertex = Vertex(0.4,0.85)
+    newVertex = Vertex(0.4,0.85,'vertex')
     graph.add_vertex(newVertex)
     print(near_edges(newVertex, graph.edges, 3))
 
@@ -77,31 +77,31 @@ if __name__=="__main__":
 
     graph.add_vertex(nearest_point_on_edges(newVertex))
 
-    newVertex = Vertex(3,4.9)
+    newVertex = Vertex(3,4.9,'vertex')
     graph.add_vertex(newVertex)
     graph.add_vertex(nearest_point_on_edges(newVertex))
 
-    newVertex = Vertex(8,4.9)
+    newVertex = Vertex(8,4.9,'vertex')
     graph.add_vertex(newVertex)
     graph.add_vertex(nearest_point_on_edges(newVertex))
 
-    newVertex = Vertex(1.8,6.2)
+    newVertex = Vertex(1.8,6.2,'vertex')
     graph.add_vertex(newVertex)
     graph.add_vertex(nearest_point_on_edges(newVertex))
 
-    newVertex = Vertex(3.2,7)
+    newVertex = Vertex(3.2,7,'vertex')
     graph.add_vertex(newVertex)
     np = nearest_point_on_edges(newVertex, 1.5)
     if np is not None:
         graph.add_vertex(np)
     print(np)
-    
+    """
     ne = None
     if np.edges.values()[0].parent != None:
         ne = graph.edges[np.edges.values()[0].parent]
     else:
         ne = graph.edges[np.edges.keys()[0]]
     split_edge_at_point(ne, np)
-    
+    """
 
     print_graph(graph)
