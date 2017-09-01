@@ -19,7 +19,7 @@ def print_graph(graph):
     window = init_canvas(width * zoom + border * 2, height * zoom + border * 2)
     lines = [graph.edges[i] for i in graph.edges]
     add_lines_from_list(window, lines)
-    points = [graph.vertices[i] for i in graph.vertices]
+    points = [i for i in graph.vertices.values() if i.kind != 'helper']
     add_points_from_list(window, points)
     mainloop()
 
@@ -52,7 +52,7 @@ def add_line(can, edge):
     global zoom, mirror, border
     axay = [(edge.start.x, edge.start.y)]
     zxzy = [(edge.end.x, edge.end.y)]
-    interlst = edge.intermediates
+    interlst = [(v.x,v.y) for v in edge.intermediates]
     points = axay + interlst + zxzy
     for i in range(len(points)-1):
         can.create_line(points[i][0] * zoom + border, mirror - points[i][1] * zoom + border, points[i+1][0] * zoom + border, mirror - points[i+1][1] * zoom + border) 
