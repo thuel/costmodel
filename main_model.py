@@ -44,25 +44,9 @@ if __name__=="__main__":
     graph.add_edge(7,5,6,1)
     graph.add_edge(7,5,10,8)
     
-    for vertex in graph.vertices:
-        #print graph.get_connecting_edges(graph.vertices[vertex])
-        print("neighbours: ", graph.vertices[vertex].neighbours)
-
-    for edge in graph.edges:
-        e = graph.edges[edge]
-        print(e, e.length())
-
-    print(graph.min_corner_xy())
-    print(graph.max_corner_xy())
-
-    print("dimensions: ", graph.dimensions())
-    print([edge.id() for edge in graph.edges.values()])
-
     d2 = dijkstra(graph, '011')
     d1 = dijkstra(graph, '011', '011')
     
-    print('distances d2: %s' % d2[0])
-
     result = shortest_path(graph,'0108', '011')
     print(result)
 
@@ -70,10 +54,6 @@ if __name__=="__main__":
 
     newVertex = Vertex(0.4,0.85,'vertex')
     graph.add_vertex(newVertex)
-    print(near_edges(newVertex, graph.edges, 3))
-
-    for e_id, edge in graph.edges.items():
-        print(e_id, edge.angle())
 
     graph.add_vertex(nearest_point_on_edges(newVertex))
 
@@ -91,17 +71,11 @@ if __name__=="__main__":
 
     newVertex = Vertex(3.2,7,'vertex')
     graph.add_vertex(newVertex)
-    np = nearest_point_on_edges(newVertex, 1.5)
+    np = nearest_point_on_edges(newVertex)
     if np is not None:
         graph.add_vertex(np)
-    print(np)
-    """
-    ne = None
-    if np.edges.values()[0].parent != None:
-        ne = graph.edges[np.edges.values()[0].parent]
-    else:
-        ne = graph.edges[np.edges.keys()[0]]
+        
+    ne = graph.edges[np.nearest_edge]
     split_edge_at_point(ne, np)
-    """
 
     print_graph(graph)
