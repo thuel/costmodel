@@ -7,7 +7,7 @@
 from __future__ import (absolute_import, division, print_function, unicode_literals)
 from builtins import *
 from math import sqrt, sin, cos, asin, atan2, acos, degrees, radians
-from priodict import priorityDictionary
+from pyTools.priodict import priorityDictionary
 import copy
 
 
@@ -71,6 +71,15 @@ class Edge(object):
         
     def __str__(self):
         return "Edge with vertices at %f / %f and %f / %f." % (self.start.x, self.start.y, self.end.x, self.end.y)
+
+    def __eq__(self, other):
+        return self.length() == other.length()
+
+    def __ne__(self, other):
+        return self.length() != other.length()
+
+    def __lt__(self, other):
+        return self.length() < other.length()
         
     def __delete__(self):
         del self.start.edges[self.id()]
